@@ -38,8 +38,8 @@ export default function Home() {
   return (
     <div className="bg-light-gray">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-navy via-navy to-emerald text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <section className="relative bg-gradient-to-br from-navy via-navy to-emerald text-white" style={{backgroundImage: 'url(/hero.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}>
+        <div className="absolute inset-0 bg-black/60"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -50,6 +50,7 @@ export default function Home() {
               Descubre las mejores aplicaciones financieras, lee reviews detalladas y aprende 
               a gestionar tu dinero de manera inteligente con nuestros tutoriales expertos.
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/articulos"

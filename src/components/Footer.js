@@ -38,11 +38,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center space-x-2 mb-4">
-              <div className="bg-emerald p-2 rounded-lg">
-                <DollarSign className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold">AppFinanzasHoy</span>
+            <Link href="/" className="flex items-center mb-4">
+              <img src="/logo.png" alt="AppFinanzasHoy" className="h-12 w-auto" />
             </Link>
             <p className="text-gray-400 mb-4">
               Tu guía completa para las mejores aplicaciones de finanzas personales. 
