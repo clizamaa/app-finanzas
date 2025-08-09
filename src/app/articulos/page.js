@@ -1,108 +1,44 @@
+'use client'
+
 import Link from 'next/link'
 import { Calendar, Clock, User, Search, Filter } from 'lucide-react'
-
-export const metadata = {
-  title: 'Artículos sobre Finanzas Personales',
-  description: 'Descubre artículos, guías y consejos sobre finanzas personales, aplicaciones financieras y gestión del dinero.',
-}
+import { useState, useEffect } from 'react'
 
 const ArticulosPage = () => {
-  // Datos de ejemplo - en producción vendrían de la base de datos
-  const articles = [
-    {
-      id: 1,
-      title: 'Las 10 Mejores Apps de Presupuesto Personal para 2024',
-      excerpt: 'Descubre cuáles son las aplicaciones más efectivas para controlar tus gastos y crear un presupuesto que realmente funcione.',
-      content: '',
-      image: '/images/articles/presupuesto-apps.jpg',
-      category: { name: 'Reviews', slug: 'reviews' },
-      readTime: '8 min',
-      views: 1250,
-      publishedAt: '2024-01-15',
-      slug: 'mejores-apps-presupuesto-2024',
-      featured: true,
-      tags: [{ name: 'Presupuesto', slug: 'presupuesto' }, { name: 'Apps', slug: 'apps' }]
-    },
-    {
-      id: 2,
-      title: 'Cómo Configurar YNAB: Guía Completa para Principiantes',
-      excerpt: 'Tutorial paso a paso para configurar You Need A Budget y comenzar a tomar control total de tus finanzas personales.',
-      content: '',
-      image: '/images/articles/ynab-tutorial.jpg',
-      category: { name: 'Tutoriales', slug: 'tutoriales' },
-      readTime: '12 min',
-      views: 890,
-      publishedAt: '2024-01-12',
-      slug: 'como-configurar-ynab-guia-completa',
-      featured: false,
-      tags: [{ name: 'YNAB', slug: 'ynab' }, { name: 'Tutorial', slug: 'tutorial' }]
-    },
-    {
-      id: 3,
-      title: 'Mint vs PocketGuard: Comparativa Detallada',
-      excerpt: 'Análisis completo de dos de las apps de finanzas más populares. Descubre cuál se adapta mejor a tu estilo de vida.',
-      content: '',
-      image: '/images/articles/mint-vs-pocketguard.jpg',
-      category: { name: 'Comparativas', slug: 'comparativas' },
-      readTime: '10 min',
-      views: 2100,
-      publishedAt: '2024-01-10',
-      slug: 'mint-vs-pocketguard-comparativa',
-      featured: true,
-      tags: [{ name: 'Mint', slug: 'mint' }, { name: 'PocketGuard', slug: 'pocketguard' }]
-    },
-    {
-      id: 4,
-      title: '5 Errores Comunes al Usar Apps de Finanzas Personales',
-      excerpt: 'Evita estos errores frecuentes que pueden sabotear tus objetivos financieros al usar aplicaciones de gestión de dinero.',
-      content: '',
-      image: '/images/articles/errores-apps-finanzas.jpg',
-      category: { name: 'Consejos', slug: 'consejos' },
-      readTime: '6 min',
-      views: 750,
-      publishedAt: '2024-01-08',
-      slug: 'errores-comunes-apps-finanzas',
-      featured: false,
-      tags: [{ name: 'Consejos', slug: 'consejos' }, { name: 'Errores', slug: 'errores' }]
-    },
-    {
-      id: 5,
-      title: 'Cómo Elegir la Mejor App de Inversión para Principiantes',
-      excerpt: 'Guía completa para seleccionar tu primera aplicación de inversión, con criterios clave y recomendaciones.',
-      content: '',
-      image: '/images/articles/apps-inversion-principiantes.jpg',
-      category: { name: 'Inversiones', slug: 'inversiones' },
-      readTime: '15 min',
-      views: 1800,
-      publishedAt: '2024-01-05',
-      slug: 'mejor-app-inversion-principiantes',
-      featured: true,
-      tags: [{ name: 'Inversiones', slug: 'inversiones' }, { name: 'Principiantes', slug: 'principiantes' }]
-    },
-    {
-      id: 6,
-      title: 'Seguridad en Apps Financieras: Lo Que Debes Saber',
-      excerpt: 'Todo lo que necesitas conocer sobre la seguridad de tus datos financieros en aplicaciones móviles.',
-      content: '',
-      image: '/images/articles/seguridad-apps-financieras.jpg',
-      category: { name: 'Seguridad', slug: 'seguridad' },
-      readTime: '9 min',
-      views: 950,
-      publishedAt: '2024-01-03',
-      slug: 'seguridad-apps-financieras',
-      featured: false,
-      tags: [{ name: 'Seguridad', slug: 'seguridad' }, { name: 'Privacidad', slug: 'privacidad' }]
-    }
-  ]
+  const [articles, setArticles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch('/api/admin/articles')
+        if (!response.ok) {
+          throw new Error('Error al cargar los artículos')
+        }
+        const data = await response.json()
+        // Filtrar solo artículos publicados
+        const publishedArticles = data.filter(article => article.status === 'published')
+        setArticles(publishedArticles)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchArticles()
+  }, [])
+
+  // Generar categorías dinámicamente basadas en los artículos
   const categories = [
     { name: 'Todos', slug: 'todos', count: articles.length },
-    { name: 'Reviews', slug: 'reviews', count: articles.filter(a => a.category.slug === 'reviews').length },
-    { name: 'Tutoriales', slug: 'tutoriales', count: articles.filter(a => a.category.slug === 'tutoriales').length },
-    { name: 'Comparativas', slug: 'comparativas', count: articles.filter(a => a.category.slug === 'comparativas').length },
-    { name: 'Consejos', slug: 'consejos', count: articles.filter(a => a.category.slug === 'consejos').length },
-    { name: 'Inversiones', slug: 'inversiones', count: articles.filter(a => a.category.slug === 'inversiones').length },
-    { name: 'Seguridad', slug: 'seguridad', count: articles.filter(a => a.category.slug === 'seguridad').length }
+    ...Array.from(new Set(articles.map(a => a.category)))
+      .map(category => ({
+        name: category,
+        slug: category.toLowerCase().replace(/\s+/g, '-'),
+        count: articles.filter(a => a.category === category).length
+      }))
   ]
 
   const formatDate = (dateString) => {
@@ -116,6 +52,56 @@ const ArticulosPage = () => {
 
   const featuredArticles = articles.filter(article => article.featured)
   const regularArticles = articles.filter(article => !article.featured)
+
+  if (loading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando artículos...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (articles.length === 0) {
+    return (
+      <div className="bg-gray-50 min-h-screen">
+        <section className="bg-light-gray border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Artículos sobre Finanzas Personales
+              </h1>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Descubre guías, consejos y análisis profundos sobre las mejores aplicaciones 
+                financieras y estrategias para gestionar tu dinero de manera inteligente.
+              </p>
+            </div>
+          </div>
+        </section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <p className="text-gray-600 text-lg">No hay artículos publicados aún.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">

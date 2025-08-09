@@ -1,58 +1,40 @@
+'use client'
+
 import Link from 'next/link'
 import { Calendar, Clock, TrendingUp } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const RelatedArticles = ({ currentArticleId, category }) => {
-  // En producción, estos datos vendrían de una consulta a la base de datos
-  // filtrada por categoría y excluyendo el artículo actual
-  const relatedArticles = [
-    {
-      id: 2,
-      title: 'Cómo Crear un Fondo de Emergencia en 6 Meses',
-      excerpt: 'Aprende la estrategia paso a paso para construir tu colchón financiero y protegerte de imprevistos.',
-      image: '/images/articles/fondo-emergencia.jpg',
-      category: { name: 'Tutoriales', slug: 'tutoriales' },
-      readTime: '6 min',
-      publishedAt: '2024-01-12',
-      slug: 'como-crear-fondo-emergencia-6-meses',
-      views: 890
-    },
-    {
-      id: 3,
-      title: 'Inversión para Principiantes: Guía Completa 2024',
-      excerpt: 'Todo lo que necesitas saber para comenzar a invertir tu dinero de forma inteligente y segura.',
-      image: '/images/articles/inversion-principiantes.jpg',
-      category: { name: 'Tutoriales', slug: 'tutoriales' },
-      readTime: '12 min',
-      publishedAt: '2024-01-10',
-      slug: 'inversion-principiantes-guia-completa-2024',
-      views: 1456
-    },
-    {
-      id: 4,
-      title: 'Las 5 Mejores Tarjetas de Crédito sin Anualidad',
-      excerpt: 'Descubre cuáles son las tarjetas de crédito que ofrecen los mejores beneficios sin costo anual.',
-      image: '/images/articles/tarjetas-credito.jpg',
-      category: { name: 'Reviews', slug: 'reviews' },
-      readTime: '7 min',
-      publishedAt: '2024-01-08',
-      slug: 'mejores-tarjetas-credito-sin-anualidad',
-      views: 1123
-    },
-    {
-      id: 5,
-      title: 'Criptomonedas: ¿Vale la Pena Invertir en 2024?',
-      excerpt: 'Análisis completo del mercado de criptomonedas y si es una buena opción de inversión este año.',
-      image: '/images/articles/criptomonedas-2024.jpg',
-      category: { name: 'Análisis', slug: 'analisis' },
-      readTime: '10 min',
-      publishedAt: '2024-01-05',
-      slug: 'criptomonedas-vale-pena-invertir-2024',
-      views: 2341
-    }
-  ]
+  const [relatedArticles, setRelatedArticles] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Filtrar artículos relacionados (excluyendo el actual)
-  const filteredArticles = relatedArticles.filter(article => article.id !== currentArticleId)
+  useEffect(() => {
+    const fetchRelatedArticles = async () => {
+      try {
+        const response = await fetch('/api/admin/articles')
+        if (response.ok) {
+          const data = await response.json()
+          
+          // Filtrar artículos relacionados: misma categoría, publicados, excluyendo el actual
+          const filtered = data
+            .filter(article => 
+              article.status === 'published' &&
+              article.id !== currentArticleId &&
+              article.category === category
+            )
+            .slice(0, 3) // Máximo 3 artículos relacionados
+          
+          setRelatedArticles(filtered)
+        }
+      } catch (error) {
+        console.error('Error fetching related articles:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRelatedArticles()
+  }, [currentArticleId, category])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -70,7 +52,22 @@ const RelatedArticles = ({ currentArticleId, category }) => {
     return views.toString()
   }
 
-  if (filteredArticles.length === 0) {
+  if (loading) {
+    return (
+      <section className="bg-light-gray py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            Artículos Relacionados
+          </h2>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (relatedArticles.length === 0) {
     return null
   }
 
@@ -90,7 +87,7 @@ const RelatedArticles = ({ currentArticleId, category }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredArticles.slice(0, 3).map((article) => (
+          {relatedArticles.map((article) => (
             <article key={article.id} className="bg-light-gray rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
               {/* Article Image */}
               <div className="h-48 bg-gradient-to-br from-navy to-emerald flex items-center justify-center">

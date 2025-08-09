@@ -1,40 +1,107 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Calendar, Clock, ArrowRight } from 'lucide-react'
 
 const FeaturedArticles = () => {
-  // Datos de ejemplo - en producción vendrían de la base de datos
-  const featuredArticles = [
-    {
-      id: 1,
-      title: 'Las 10 Mejores Apps de Presupuesto Personal para 2024',
-      excerpt: 'Descubre cuáles son las aplicaciones más efectivas para controlar tus gastos y crear un presupuesto que realmente funcione.',
-      image: '/images/articles/presupuesto-apps.jpg',
-      category: 'Reviews',
-      readTime: '8 min',
-      publishedAt: '2024-01-15',
-      slug: 'mejores-apps-presupuesto-2024'
-    },
-    {
-      id: 2,
-      title: 'Cómo Configurar YNAB: Guía Completa para Principiantes',
-      excerpt: 'Tutorial paso a paso para configurar You Need A Budget y comenzar a tomar control total de tus finanzas personales.',
-      image: '/images/articles/ynab-tutorial.jpg',
-      category: 'Tutoriales',
-      readTime: '12 min',
-      publishedAt: '2024-01-12',
-      slug: 'como-configurar-ynab-guia-completa'
-    },
-    {
-      id: 3,
-      title: 'Mint vs PocketGuard: Comparativa Detallada',
-      excerpt: 'Análisis completo de dos de las apps de finanzas más populares. Descubre cuál se adapta mejor a tu estilo de vida.',
-      image: '/images/articles/mint-vs-pocketguard.jpg',
-      category: 'Comparativas',
-      readTime: '10 min',
-      publishedAt: '2024-01-10',
-      slug: 'mint-vs-pocketguard-comparativa'
+  const [featuredArticles, setFeaturedArticles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch('/api/articles')
+        if (!response.ok) {
+          throw new Error('Error al cargar los artículos')
+        }
+        const data = await response.json()
+        // Validar que data sea un array antes de filtrar
+        if (Array.isArray(data)) {
+          // Filtrar solo artículos publicados y destacados, tomar los primeros 3
+          const publishedArticles = data.filter(article => 
+            article.status === 'published' && article.featured
+          ).slice(0, 3)
+          setFeaturedArticles(publishedArticles)
+        } else {
+          setFeaturedArticles([])
+        }
+      } catch (error) {
+        console.error('Error fetching articles:', error)
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchArticles()
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="bg-light-gray py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+              Artículos Destacados
+            </h2>
+            <p className="text-xl text-text-gray max-w-3xl mx-auto">
+              Cargando los mejores artículos...
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden animate-pulse">
+                <div className="h-48 bg-gray-200"></div>
+                <div className="p-6">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="bg-light-gray py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+              Artículos Destacados
+            </h2>
+            <p className="text-text-gray mb-4">No pudimos cargar los artículos en este momento.</p>
+            <p className="text-gray-500">Estamos trabajando para solucionarlo. Por favor, intenta recargar la página más tarde.</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (featuredArticles.length === 0) {
+    return (
+      <section className="bg-light-gray py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+              Artículos Destacados
+            </h2>
+            <p className="text-text-gray mb-2">Aún no hay artículos destacados disponibles.</p>
+            <p className="text-gray-500">Pronto publicaremos contenido valioso sobre finanzas personales.</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -68,7 +135,7 @@ const FeaturedArticles = () => {
                 </div>
                 <div className="absolute top-4 left-4">
                   <span className="bg-light-gray text-navy px-3 py-1 rounded-full text-sm font-medium">
-                    {article.category}
+                    {article.category || 'Artículo'}
                   </span>
                 </div>
               </div>
@@ -84,18 +151,18 @@ const FeaturedArticles = () => {
                 </h3>
                 
                 <p className="text-text-gray mb-4 line-clamp-3">
-                  {article.excerpt}
+                  {article.excerpt || article.content?.substring(0, 150) + '...'}
                 </p>
                 
                 <div className="flex items-center justify-between text-sm text-text-gray mb-4">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
-                      {formatDate(article.publishedAt)}
+                      {formatDate(article.publishedAt || article.createdAt)}
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
-                      {article.readTime}
+                      {article.readTime || '5 min'}
                     </div>
                   </div>
                 </div>

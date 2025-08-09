@@ -2,140 +2,50 @@
 
 import Link from 'next/link'
 import { Calendar, Clock, User, ArrowLeft, Filter, Grid, List } from 'lucide-react'
-import { useState } from 'react'
-
-// Función para generar metadatos dinámicos
-export async function generateMetadata({ params }) {
-  // En producción, aquí harías una consulta a la base de datos
-  const categoryNames = {
-    'reviews': 'Reviews',
-    'tutoriales': 'Tutoriales',
-    'analisis': 'Análisis',
-    'noticias': 'Noticias'
-  }
-  
-  const categoryName = categoryNames[params.slug] || 'Categoría'
-  
-  return {
-    title: `${categoryName} - Artículos de Finanzas Personales`,
-    description: `Descubre todos nuestros artículos de ${categoryName.toLowerCase()} sobre finanzas personales, inversiones y aplicaciones financieras.`,
-    openGraph: {
-      title: `${categoryName} - AppFinanzasHoy`,
-      description: `Artículos de ${categoryName.toLowerCase()} sobre finanzas personales`,
-      type: 'website',
-    },
-  }
-}
+import { useState, useEffect } from 'react'
 
 const CategoryPage = ({ params }) => {
-  // En producción, estos datos vendrían de la base de datos
-  const categories = {
-    'reviews': {
-      name: 'Reviews',
-      description: 'Análisis detallados de las mejores aplicaciones y herramientas financieras del mercado.',
-      color: 'blue',
-      icon: '⭐'
-    },
-    'tutoriales': {
-      name: 'Tutoriales',
-      description: 'Guías paso a paso para mejorar tus finanzas personales y alcanzar tus objetivos financieros.',
-      color: 'green',
-      icon: '📚'
-    },
-    'analisis': {
-      name: 'Análisis',
-      description: 'Análisis profundos del mercado financiero, tendencias y oportunidades de inversión.',
-      color: 'purple',
-      icon: '📊'
-    },
-    'noticias': {
-      name: 'Noticias',
-      description: 'Las últimas noticias del mundo financiero que pueden impactar tus decisiones de inversión.',
-      color: 'red',
-      icon: '📰'
+  const [articles, setArticles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [categoryName, setCategoryName] = useState('')
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch('/api/admin/articles')
+        if (!response.ok) {
+          throw new Error('Error al cargar los artículos')
+        }
+        const data = await response.json()
+        
+        // Filtrar artículos por categoría y solo los publicados
+        const categorySlug = params.slug
+        const filteredArticles = data.filter(article => 
+          article.status === 'published' && 
+          article.category.toLowerCase().replace(/\s+/g, '-') === categorySlug
+        )
+        
+        setArticles(filteredArticles)
+        
+        // Establecer el nombre de la categoría
+        if (filteredArticles.length > 0) {
+          setCategoryName(filteredArticles[0].category)
+        } else {
+          // Convertir slug a nombre legible
+          setCategoryName(categorySlug.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '))
+        }
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  const currentCategory = categories[params.slug] || categories['reviews']
-
-  // Artículos de ejemplo filtrados por categoría
-  const allArticles = [
-    {
-      id: 1,
-      title: 'Las 10 Mejores Apps de Presupuesto Personal para 2024',
-      excerpt: 'Descubre cuáles son las aplicaciones más efectivas para controlar tus gastos y crear un presupuesto que realmente funcione.',
-      image: '/images/articles/presupuesto-apps.jpg',
-      category: 'reviews',
-      readTime: '8 min',
-      views: 1250,
-      publishedAt: '2024-01-15',
-      slug: 'mejores-apps-presupuesto-2024',
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Cómo Crear un Fondo de Emergencia en 6 Meses',
-      excerpt: 'Aprende la estrategia paso a paso para construir tu colchón financiero y protegerte de imprevistos.',
-      image: '/images/articles/fondo-emergencia.jpg',
-      category: 'tutoriales',
-      readTime: '6 min',
-      views: 890,
-      publishedAt: '2024-01-12',
-      slug: 'como-crear-fondo-emergencia-6-meses',
-      featured: false
-    },
-    {
-      id: 3,
-      title: 'Análisis: El Futuro de las Fintech en Latinoamérica',
-      excerpt: 'Un análisis profundo sobre las tendencias y oportunidades en el sector fintech de la región.',
-      image: '/images/articles/fintech-latam.jpg',
-      category: 'analisis',
-      readTime: '12 min',
-      views: 1456,
-      publishedAt: '2024-01-10',
-      slug: 'futuro-fintech-latinoamerica',
-      featured: true
-    },
-    {
-      id: 4,
-      title: 'Revolut vs Wise: Comparativa Completa 2024',
-      excerpt: 'Comparamos las dos plataformas más populares para transferencias internacionales y manejo de múltiples divisas.',
-      image: '/images/articles/revolut-vs-wise.jpg',
-      category: 'reviews',
-      readTime: '10 min',
-      views: 2100,
-      publishedAt: '2024-01-08',
-      slug: 'revolut-vs-wise-comparativa-2024',
-      featured: false
-    },
-    {
-      id: 5,
-      title: 'Guía Completa: Cómo Invertir en ETFs',
-      excerpt: 'Todo lo que necesitas saber para comenzar a invertir en ETFs de forma inteligente y diversificada.',
-      image: '/images/articles/invertir-etfs.jpg',
-      category: 'tutoriales',
-      readTime: '15 min',
-      views: 1789,
-      publishedAt: '2024-01-05',
-      slug: 'guia-completa-invertir-etfs',
-      featured: true
-    },
-    {
-      id: 6,
-      title: 'Bancos Digitales Alcanzan Record de Usuarios',
-      excerpt: 'Los bancos digitales superan los 50 millones de usuarios en Latinoamérica durante 2024.',
-      image: '/images/articles/bancos-digitales-record.jpg',
-      category: 'noticias',
-      readTime: '4 min',
-      views: 856,
-      publishedAt: '2024-01-03',
-      slug: 'bancos-digitales-record-usuarios',
-      featured: false
-    }
-  ]
-
-  // Filtrar artículos por categoría
-  const categoryArticles = allArticles.filter(article => article.category === params.slug)
+    fetchArticles()
+  }, [params.slug])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -153,14 +63,31 @@ const CategoryPage = ({ params }) => {
     return views.toString()
   }
 
-  const getColorClasses = (color) => {
-    const colors = {
-      blue: 'bg-blue-100 text-blue-800 border-blue-200',
-      green: 'bg-green-100 text-green-800 border-green-200',
-      purple: 'bg-purple-100 text-purple-800 border-purple-200',
-      red: 'bg-red-100 text-red-800 border-red-200'
-    }
-    return colors[color] || colors.blue
+  if (loading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando artículos...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -173,7 +100,7 @@ const CategoryPage = ({ params }) => {
             <span>/</span>
             <Link href="/articulos" className="hover:text-blue-600">Artículos</Link>
             <span>/</span>
-            <span className="text-gray-900">{currentCategory.name}</span>
+            <span className="text-gray-900">{categoryName}</span>
           </nav>
         </div>
       </div>
@@ -191,29 +118,29 @@ const CategoryPage = ({ params }) => {
         {/* Category Header */}
         <div className="bg-light-gray rounded-lg shadow-sm p-8 mb-8">
           <div className="text-center">
-            <div className="text-6xl mb-4">{currentCategory.icon}</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {currentCategory.name}
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-              {currentCategory.description}
-            </p>
-            <div className={`inline-flex items-center px-4 py-2 rounded-full border ${getColorClasses(currentCategory.color)}`}>
+            <div className="text-6xl mb-4">📚</div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                {categoryName}
+              </h1>
+              <p className="text-xl text-gray-600 mb-6">
+                Artículos de {categoryName.toLowerCase()} sobre finanzas personales y aplicaciones financieras.
+              </p>
+              <div className="inline-flex items-center px-4 py-2 rounded-full border bg-blue-100 text-blue-800 border-blue-200">
               <span className="font-medium">
-                {categoryArticles.length} artículo{categoryArticles.length !== 1 ? 's' : ''}
+                {articles.length} artículo{articles.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
         </div>
 
         {/* Articles Grid */}
-        {categoryArticles.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categoryArticles.map((article) => (
+        {articles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {articles.map((article) => (
               <article key={article.id} className="bg-light-gray rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 {/* Article Image */}
                 <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center relative">
-                  <span className="text-white font-semibold text-lg">{currentCategory.name}</span>
+                  <span className="text-white font-semibold text-lg">{categoryName}</span>
                   {article.featured && (
                     <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold">
                       Destacado

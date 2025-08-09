@@ -12,68 +12,37 @@ const CommentSection = ({ articleId }) => {
   const [loading, setLoading] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
 
-  // Datos de ejemplo - en producción vendrían de la API
-  const sampleComments = [
-    {
-      id: 1,
-      author: 'María González',
-      content: 'Excelente artículo! He estado usando YNAB por 6 meses y realmente ha cambiado mi forma de manejar el dinero. La curva de aprendizaje vale la pena.',
-      createdAt: '2024-01-16T10:30:00Z',
-      likes: 12,
-      replies: [
-        {
-          id: 2,
-          author: 'Carlos Ruiz',
-          content: '¿Cuánto tiempo te tomó acostumbrarte a la metodología de YNAB? Estoy considerando probarlo.',
-          createdAt: '2024-01-16T11:15:00Z',
-          likes: 3,
-          parentId: 1
-        },
-        {
-          id: 3,
-          author: 'María González',
-          content: '@Carlos Ruiz Aproximadamente 2-3 semanas para entender bien el sistema. Te recomiendo ver sus videos tutoriales, son muy útiles.',
-          createdAt: '2024-01-16T12:00:00Z',
-          likes: 5,
-          parentId: 1
-        }
-      ]
-    },
-    {
-      id: 4,
-      author: 'Ana Martínez',
-      content: 'Mint es genial para empezar, pero si quieres algo más avanzado definitivamente vale la pena invertir en una app premium. La automatización ahorra mucho tiempo.',
-      createdAt: '2024-01-16T09:45:00Z',
-      likes: 8,
-      replies: []
-    },
-    {
-      id: 5,
-      author: 'Roberto Silva',
-      content: 'Echo de menos que no mencionen PocketSmith. Para mí es la mejor opción para planificación a largo plazo. ¿Alguien más la ha probado?',
-      createdAt: '2024-01-16T08:20:00Z',
-      likes: 4,
-      replies: [
-        {
-          id: 6,
-          author: 'Laura Pérez',
-          content: 'Sí! PocketSmith es excelente para proyecciones futuras. La uso junto con YNAB para tener lo mejor de ambos mundos.',
-          createdAt: '2024-01-16T14:30:00Z',
-          likes: 2,
-          parentId: 5
-        }
-      ]
-    }
-  ]
-
   useEffect(() => {
-    // Simular carga de comentarios
-    setLoading(true)
-    setTimeout(() => {
-      setComments(sampleComments)
-      setLoading(false)
-    }, 500)
+    const fetchComments = async () => {
+      try {
+        setLoading(true)
+        // En una implementación real, aquí se haría la llamada a la API
+        // const response = await fetch(`/api/comments/${articleId}`)
+        // const data = await response.json()
+        // setComments(data)
+        
+        // Por ahora, dejamos los comentarios vacíos hasta que se implemente la API
+        setComments([])
+      } catch (error) {
+        console.error('Error fetching comments:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (articleId) {
+      fetchComments()
+    }
   }, [articleId])
+
+  // Función para mostrar mensaje cuando no hay comentarios
+  const renderNoComments = () => (
+    <div className="text-center py-8">
+      <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">No hay comentarios aún</h3>
+      <p className="text-gray-600">Sé el primero en compartir tu opinión sobre este artículo.</p>
+    </div>
+  )
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -372,12 +341,7 @@ const CommentSection = ({ articleId }) => {
         </div>
       )}
       
-      {comments.length === 0 && !loading && (
-        <div className="text-center py-8">
-          <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Sé el primero en comentar este artículo</p>
-        </div>
-      )}
+      {comments.length === 0 && !loading && renderNoComments()}
     </div>
   )
 }
