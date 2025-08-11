@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-
-// Base de datos en memoria para artículos
-let articles = []
-
-let nextId = 1
+import { prisma } from '@/lib/prisma'
 
 // Función para verificar el token JWT
 function verifyToken(request) {
@@ -35,74 +31,56 @@ export async function GET(request) {
     const sortBy = searchParams.get('sortBy') || 'updatedAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    // Filtrar artículos
-    let filteredArticles = articles
-
-    if (search) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.title.toLowerCase().includes(search.toLowerCase()) ||
-        article.excerpt.toLowerCase().includes(search.toLowerCase())
-      )
+    // Construir filtros para Prisma
+    const where = {
+      AND: [
+        search ? {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { excerpt: { contains: search, mode: 'insensitive' } }
+          ]
+        } : {},
+        category ? { category: { slug: category } } : {},
+        status ? { published: status === 'published' } : {},
+        featured !== null && featured !== undefined ? { featured: featured === 'true' } : {}
+      ]
     }
 
-    if (category) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.category.slug === category
-      )
-    }
-
-    if (status) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.status === status
-      )
-    }
-
-    if (featured !== null && featured !== undefined) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.featured === (featured === 'true')
-      )
-    }
-
-    // Ordenar artículos
-    filteredArticles.sort((a, b) => {
-      let aValue = a[sortBy]
-      let bValue = b[sortBy]
-
-      if (sortBy === 'publishedAt' || sortBy === 'updatedAt' || sortBy === 'createdAt') {
-        aValue = new Date(aValue || 0)
-        bValue = new Date(bValue || 0)
+    // Ordenación
+    const orderBy = (() => {
+      const map = {
+        publishedAt: 'publishedAt',
+        updatedAt: 'updatedAt',
+        createdAt: 'createdAt',
+        views: 'views',
+        title: 'title'
       }
+      const key = map[sortBy] || 'updatedAt'
+      return { [key]: sortOrder === 'desc' ? 'desc' : 'asc' }
+    })()
 
-      if (sortOrder === 'desc') {
-        return bValue > aValue ? 1 : -1
-      } else {
-        return aValue > bValue ? 1 : -1
-      }
-    })
-
-    // Paginación
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedArticles = filteredArticles.slice(startIndex, endIndex)
+    const [total, articles] = await Promise.all([
+      prisma.article.count({ where }),
+      prisma.article.findMany({
+        where,
+        include: { category: true, tags: true },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit
+      })
+    ])
 
     return NextResponse.json({
-      articles: paginatedArticles,
+      articles,
       pagination: {
         page,
         limit,
-        total: filteredArticles.length,
-        totalPages: Math.ceil(filteredArticles.length / limit),
-        hasNext: endIndex < filteredArticles.length,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
         hasPrev: page > 1
       },
-      filters: {
-        search,
-        category,
-        status,
-        featured,
-        sortBy,
-        sortOrder
-      }
+      filters: { search, category, status, featured, sortBy, sortOrder }
     })
   } catch (error) {
     console.error('Error fetching articles:', error)
@@ -135,14 +113,25 @@ export async function POST(request) {
     }
 
     // Generar slug si no se proporciona
-    const slug = data.slug || data.title
+    const slug = (data.slug && data.slug.trim()) || data.title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim()
 
-    // Verificar que el slug sea único
-    const existingArticle = articles.find(article => article.slug === slug)
+    // Buscar categoría por slug, o crearla si no existe
+    const categorySlug = String(data.category).toLowerCase().trim()
+    let category = await prisma.category.findUnique({ where: { slug: categorySlug } })
+    if (!category) {
+      const nameFromSlug = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      category = await prisma.category.create({
+        data: { name: nameFromSlug, slug: categorySlug }
+      })
+    }
+
+    // Verificar slug único
+    const existingArticle = await prisma.article.findUnique({ where: { slug } })
     if (existingArticle) {
       return NextResponse.json(
         { error: 'Ya existe un artículo con este slug' },
@@ -150,26 +139,24 @@ export async function POST(request) {
       )
     }
 
-    const newArticle = {
-      id: nextId++,
-      title: data.title,
-      excerpt: data.excerpt || '',
-      content: data.content,
-      category: data.category,
-      tags: data.tags || [],
-      status: data.status || 'draft',
-      featured: data.featured || false,
-      views: 0,
-      publishedAt: data.status === 'published' ? new Date().toISOString() : null,
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      slug,
-      author: data.author || 'Admin',
-      metaDescription: data.metaDescription || '',
-      metaKeywords: data.metaKeywords || ''
-    }
+    // Nota sobre tags: por ahora ignoramos el array recibido desde el cliente, ya que no corresponde con IDs reales de la BD
+    // En una mejora posterior, podemos soportar creación/búsqueda por slug/nombre
 
-    articles.push(newArticle)
+    const newArticle = await prisma.article.create({
+      data: {
+        title: data.title,
+        slug,
+        excerpt: data.excerpt || '',
+        content: data.content,
+        image: data.image || null,
+        published: data.status === 'published' || !!data.published,
+        featured: !!data.featured,
+        views: 0,
+        category: { connect: { id: category.id } }
+        // Nota: omitimos 'tags' en el create para evitar errores; se podrá manejar luego con 'connect' o creación de tags reales
+      },
+      include: { category: true, tags: true }
+    })
 
     return NextResponse.json({
       message: 'Artículo creado exitosamente',
@@ -177,104 +164,6 @@ export async function POST(request) {
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating article:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PUT(request) {
-  try {
-    const data = await request.json()
-    const { action, ids } = data
-
-    if (!action || !ids || !Array.isArray(ids)) {
-      return NextResponse.json(
-        { error: 'Acción e IDs son requeridos' },
-        { status: 400 }
-      )
-    }
-
-    let updatedCount = 0
-
-    switch (action) {
-      case 'publish':
-        articles = articles.map(article => {
-          if (ids.includes(article.id)) {
-            updatedCount++
-            return {
-              ...article,
-              status: 'published',
-              publishedAt: article.publishedAt || new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          }
-          return article
-        })
-        break
-
-      case 'unpublish':
-        articles = articles.map(article => {
-          if (ids.includes(article.id)) {
-            updatedCount++
-            return {
-              ...article,
-              status: 'draft',
-              updatedAt: new Date().toISOString()
-            }
-          }
-          return article
-        })
-        break
-
-      case 'feature':
-        articles = articles.map(article => {
-          if (ids.includes(article.id)) {
-            updatedCount++
-            return {
-              ...article,
-              featured: true,
-              updatedAt: new Date().toISOString()
-            }
-          }
-          return article
-        })
-        break
-
-      case 'unfeature':
-        articles = articles.map(article => {
-          if (ids.includes(article.id)) {
-            updatedCount++
-            return {
-              ...article,
-              featured: false,
-              updatedAt: new Date().toISOString()
-            }
-          }
-          return article
-        })
-        break
-
-      case 'delete':
-        const initialLength = articles.length
-        articles = articles.filter(article => !ids.includes(article.id))
-        updatedCount = initialLength - articles.length
-        break
-
-      default:
-        return NextResponse.json(
-          { error: 'Acción no válida' },
-          { status: 400 }
-        )
-    }
-
-    return NextResponse.json({
-      message: `${updatedCount} artículo(s) ${action === 'delete' ? 'eliminado(s)' : 'actualizado(s)'} exitosamente`,
-      updatedCount
-    })
-  } catch (error) {
-    console.error('Error updating articles:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
