@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Download
 } from 'lucide-react'
+import { showDeleteConfirm } from '@/lib/sweetAlert'
 
 const ReviewsManagement = () => {
   const [reviews, setReviews] = useState([])
@@ -69,9 +70,10 @@ const ReviewsManagement = () => {
     setFilteredReviews(filtered)
   }, [reviews, searchTerm, selectedCategory, selectedRating])
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const review = reviews.find(r => r.id === id)
-    if (confirm(`¿Estás seguro de que quieres eliminar la review de "${review.appName}"?`)) {
+    const result = await showDeleteConfirm(`la review de "${review.appName}"`);
+    if (result.isConfirmed) {
       setReviews(reviews.filter(review => review.id !== id))
     }
   }

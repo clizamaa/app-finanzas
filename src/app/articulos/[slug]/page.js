@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Calendar, Clock, User, Share2, BookOpen, ArrowLeft } from 'lucide-react'
+import { showToast } from '@/lib/sweetAlert'
 import ReactMarkdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import CommentSection from '@/components/CommentSection'
@@ -78,7 +79,7 @@ const ArticlePage = () => {
     } else {
       // Fallback: copiar URL al portapapeles
       navigator.clipboard.writeText(window.location.href)
-      alert('URL copiada al portapapeles')
+      showToast('URL copiada al portapapeles', 'success')
     }
   }
 

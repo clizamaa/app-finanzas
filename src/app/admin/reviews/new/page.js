@@ -13,6 +13,7 @@ import {
   Upload,
   AlertCircle
 } from 'lucide-react'
+import { showError, showInfo } from '@/lib/sweetAlert'
 
 const NewReview = () => {
   const router = useRouter()
@@ -196,7 +197,7 @@ const NewReview = () => {
       router.push('/admin/reviews')
     } catch (error) {
       console.error('Error al guardar la review:', error)
-      alert('Error al guardar la review. Por favor, intenta de nuevo.')
+      showError('Error', 'No se pudo guardar la review. Por favor, intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -204,7 +205,7 @@ const NewReview = () => {
 
   const handlePreview = () => {
     // Simular vista previa
-    alert('Vista previa de la review (funcionalidad pendiente)')
+    showInfo('Vista previa', 'Funcionalidad de vista previa en desarrollo')
   }
 
   const renderStars = (rating) => {

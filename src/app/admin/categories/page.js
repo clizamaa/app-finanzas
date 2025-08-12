@@ -13,6 +13,7 @@ import {
   Calendar
 } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/auth'
+import { showSuccess, showError, showDeleteConfirm } from '@/lib/sweetAlert'
 
 const CategoriesManagement = () => {
   const [categories, setCategories] = useState([])
@@ -103,7 +104,7 @@ const CategoriesManagement = () => {
         if (!res.ok) throw new Error(data?.error || 'Error al actualizar la categoría')
         const updated = data.category
         setCategories(categories.map(cat => cat.id === updated.id ? updated : cat))
-        alert('Categoría actualizada exitosamente')
+        showSuccess('¡Éxito!', 'Categoría actualizada exitosamente')
       } else {
         // Crear nueva categoría (POST)
         const res = await authenticatedFetch('/api/admin/categories', {
@@ -114,13 +115,13 @@ const CategoriesManagement = () => {
         if (!res.ok) throw new Error(data?.error || 'Error al crear la categoría')
         const created = data.category
         setCategories([...categories, created])
-        alert('Categoría creada exitosamente')
+        showSuccess('¡Éxito!', 'Categoría creada exitosamente')
       }
 
       handleCloseModal()
     } catch (error) {
       console.error('Error al guardar categoría:', error)
-      alert(error.message || 'Error al guardar la categoría')
+      showError('Error', error.message || 'Error al guardar la categoría')
     }
   }
 
@@ -140,11 +141,12 @@ const CategoriesManagement = () => {
     if (!category) return
 
     if (category.articleCount > 0) {
-      alert(`No se puede eliminar la categoría "${category.name}" porque tiene ${category.articleCount} artículos asociados.`)
+      showError('No se puede eliminar', `La categoría "${category.name}" tiene ${category.articleCount} artículos asociados. Primero mueve o elimina los artículos.`)
       return
     }
 
-    if (confirm(`¿Estás seguro de que quieres eliminar la categoría "${category.name}"?`)) {
+    const result = await showDeleteConfirm(`la categoría "${category.name}"`);
+    if (result.isConfirmed) {
       try {
         const res = await authenticatedFetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
         const data = await res.json().catch(() => ({}))
@@ -152,7 +154,7 @@ const CategoriesManagement = () => {
         setCategories(categories.filter(cat => cat.id !== id))
       } catch (err) {
         console.error('Error eliminando categoría:', err)
-        alert(err.message || 'Error al eliminar la categoría')
+        showError('Error', err.message || 'Error al eliminar la categoría')
       }
     }
   }

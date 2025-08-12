@@ -22,6 +22,7 @@ import {
   Image,
   Type
 } from 'lucide-react'
+import { showError, showSuccess, showToast } from '@/lib/sweetAlert'
 
 // Importar SimpleMDE dinámicamente para evitar errores de SSR
 const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false })
@@ -130,7 +131,7 @@ const NewArticle = () => {
           })
         } catch (error) {
           console.error('Error fetching article:', error)
-          alert(`Error al cargar el artículo: ${error.message}`)
+          showError('Error al cargar', `No se pudo cargar el artículo: ${error.message}`)
           router.push('/admin/articles')
         } finally {
           setLoadingData(false)
@@ -214,7 +215,7 @@ const NewArticle = () => {
     try {
       // Validaciones básicas
       if (!formData.title || !formData.content || !formData.categoryId || !formData.image) {
-        alert('Por favor completa todos los campos requeridos (título, contenido, categoría e imagen)')
+        showError('Campos requeridos', 'Por favor completa todos los campos requeridos: título, contenido, categoría e imagen')
         return
       }
 
@@ -282,11 +283,11 @@ const NewArticle = () => {
       // Actualizar el estado local
       setFormData(prev => ({ ...prev, published: publishedStatus }))
       
-      alert(`Artículo ${publishedStatus ? 'publicado' : 'guardado como borrador'} exitosamente`)
+      showSuccess('¡Éxito!', `Artículo ${publishedStatus ? 'publicado' : 'guardado como borrador'} exitosamente`)
       router.push('/admin/articles')
     } catch (error) {
       console.error(`Error al ${isEditing ? 'actualizar' : 'crear'} artículo:`, error)
-      alert(`Error al ${isEditing ? 'actualizar' : 'crear'} el artículo: ${error.message}`)
+      showError('Error', `No se pudo ${isEditing ? 'actualizar' : 'crear'} el artículo: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -456,6 +457,36 @@ const NewArticle = () => {
                           minHeight: "400px",
                           maxHeight: "600px",
                           initialValue: "",
+                          // Configuraciones de CodeMirror para preservar saltos de línea
+                          codeMirrorOptions: {
+                            lineWrapping: true,
+                            lineNumbers: false,
+                            mode: 'markdown',
+                            theme: 'default',
+                            // Preservar saltos de línea al pegar
+                            extraKeys: {
+                              'Ctrl-V': function(cm) {
+                                // Interceptar el pegado para preservar saltos de línea
+                                navigator.clipboard.readText().then(text => {
+                                  // Preservar todos los saltos de línea
+                                  const preservedText = text.replace(/\r\n/g, '\n')
+                                  cm.replaceSelection(preservedText)
+                                }).catch(() => {
+                                  // Fallback para navegadores que no soportan clipboard API
+                                  cm.execCommand('paste')
+                                })
+                              },
+                              'Cmd-V': function(cm) {
+                                // Para Mac
+                                navigator.clipboard.readText().then(text => {
+                                  const preservedText = text.replace(/\r\n/g, '\n')
+                                  cm.replaceSelection(preservedText)
+                                }).catch(() => {
+                                  cm.execCommand('paste')
+                                })
+                              }
+                            }
+                          }
                         }}
                         className="border border-gray-300 rounded-lg"
                         style={{
@@ -572,7 +603,7 @@ const NewArticle = () => {
                           setFormData(prev => ({ ...prev, image: result.url }))
                         } catch (error) {
                           console.error('Error uploading image:', error)
-                          alert('Error al subir la imagen')
+                          showError('Error', 'No se pudo subir la imagen. Intenta de nuevo.')
                         }
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

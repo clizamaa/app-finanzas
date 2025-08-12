@@ -23,7 +23,8 @@
     "react-dom": "19.1.0",
     "react-markdown": "^10.1.0",
     "react-simplemde-editor": "^5.2.0",
-    "remark-breaks": "^4.0.0"
+    "remark-breaks": "^4.0.0",
+    "sweetalert2": "^11.22.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

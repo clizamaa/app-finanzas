@@ -16,6 +16,7 @@ import {
   Users,
   TrendingUp
 } from 'lucide-react'
+import { showDeleteConfirm } from '@/lib/sweetAlert'
 
 const TutorialsManagement = () => {
   const [tutorials, setTutorials] = useState([])
@@ -72,9 +73,10 @@ const TutorialsManagement = () => {
     setFilteredTutorials(filtered)
   }, [tutorials, searchTerm, selectedCategory, selectedDifficulty])
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const tutorial = tutorials.find(t => t.id === id)
-    if (confirm(`¿Estás seguro de que quieres eliminar el tutorial "${tutorial.title}"?`)) {
+    const result = await showDeleteConfirm(`el tutorial "${tutorial.title}"`);
+    if (result.isConfirmed) {
       setTutorials(tutorials.filter(tutorial => tutorial.id !== id))
     }
   }

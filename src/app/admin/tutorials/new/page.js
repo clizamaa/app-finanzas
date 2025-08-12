@@ -17,6 +17,7 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react'
+import { showError, showInfo } from '@/lib/sweetAlert'
 
 const NewTutorial = () => {
   const router = useRouter()
@@ -249,7 +250,7 @@ const NewTutorial = () => {
       router.push('/admin/tutorials')
     } catch (error) {
       console.error('Error al guardar el tutorial:', error)
-      alert('Error al guardar el tutorial. Por favor, intenta de nuevo.')
+      showError('Error', 'No se pudo guardar el tutorial. Por favor, intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -257,7 +258,7 @@ const NewTutorial = () => {
 
   const handlePreview = () => {
     // Simular vista previa
-    alert('Vista previa del tutorial (funcionalidad pendiente)')
+    showInfo('Vista previa', 'Funcionalidad de vista previa en desarrollo')
   }
 
   const getDifficultyColor = (difficulty) => {

@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   MoreVertical
 } from 'lucide-react'
+import { showError, showDeleteConfirm, showSuccess } from '@/lib/sweetAlert'
 
 const ArticlesManagement = () => {
   const [articles, setArticles] = useState([])
@@ -71,14 +72,19 @@ const ArticlesManagement = () => {
     }
 
     if (selectedStatus !== 'all') {
-      filtered = filtered.filter(article => article.status === selectedStatus)
+      if (selectedStatus === 'published') {
+        filtered = filtered.filter(article => article.published === true)
+      } else if (selectedStatus === 'draft') {
+        filtered = filtered.filter(article => article.published === false)
+      }
     }
 
     setFilteredArticles(filtered)
   }, [articles, searchTerm, selectedCategory, selectedStatus])
 
   const handleDelete = async (id) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este artículo?')) {
+    const result = await showDeleteConfirm('este artículo');
+    if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('adminToken')
         const response = await fetch(`/api/admin/articles/${id}`, {
@@ -95,7 +101,7 @@ const ArticlesManagement = () => {
         setArticles(articles.filter(article => article.id !== id))
       } catch (error) {
         console.error('Error deleting article:', error)
-        alert('Error al eliminar el artículo')
+        showError('Error', 'No se pudo eliminar el artículo')
       }
     }
   }
@@ -126,7 +132,7 @@ const ArticlesManagement = () => {
       ))
     } catch (error) {
       console.error('Error updating article:', error)
-      alert('Error al actualizar el artículo')
+      showError('Error', 'No se pudo actualizar el artículo')
     }
   }
 
@@ -307,11 +313,11 @@ const ArticlesManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        article.status === 'published' 
+                        article.published === true 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {article.status === 'published' ? 'Publicado' : 'Borrador'}
+                        {article.published === true ? 'Publicado' : 'Borrador'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -323,9 +329,9 @@ const ArticlesManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {article.publishedAt 
-                          ? new Date(article.publishedAt).toLocaleDateString('es-ES')
-                          : 'Sin publicar'
+                        {article.createdAt 
+                          ? new Date(article.createdAt).toLocaleDateString('es-ES')
+                          : 'Sin fecha'
                         }
                       </div>
                     </td>
