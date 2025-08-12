@@ -12,6 +12,7 @@ import {
   FileText,
   Calendar
 } from 'lucide-react'
+import { authenticatedFetch } from '@/lib/auth'
 
 const CategoriesManagement = () => {
   const [categories, setCategories] = useState([])
@@ -26,40 +27,16 @@ const CategoriesManagement = () => {
     description: ''
   })
 
-  // Cargar categorías desde los artículos
+  // Cargar categorías desde API admin
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/admin/articles')
-        if (response.ok) {
-          const articles = await response.json()
-          
-          // Generar categorías únicas basadas en los artículos
-          const categoryMap = new Map()
-          
-          articles.forEach(article => {
-            const categoryName = article.category
-            const categorySlug = categoryName.toLowerCase().replace(/\s+/g, '-')
-            
-            if (categoryMap.has(categoryName)) {
-              categoryMap.get(categoryName).articlesCount++
-            } else {
-              categoryMap.set(categoryName, {
-                id: categorySlug,
-                name: categoryName,
-                slug: categorySlug,
-                description: `Artículos de ${categoryName.toLowerCase()}`,
-                articlesCount: 1,
-                createdAt: new Date().toISOString().split('T')[0],
-                updatedAt: new Date().toISOString().split('T')[0]
-              })
-            }
-          })
-          
-          const categoriesArray = Array.from(categoryMap.values())
-          setCategories(categoriesArray)
-          setFilteredCategories(categoriesArray)
-        }
+        const response = await authenticatedFetch('/api/admin/categories', { method: 'GET' })
+        if (!response.ok) throw new Error('Error al cargar categorías')
+        const data = await response.json()
+        const list = Array.isArray(data?.categories) ? data.categories : []
+        setCategories(list)
+        setFilteredCategories(list)
       } catch (error) {
         console.error('Error fetching categories:', error)
         setCategories([])
@@ -79,7 +56,7 @@ const CategoriesManagement = () => {
     if (searchTerm) {
       filtered = filtered.filter(category => 
         category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (category.description || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -109,33 +86,41 @@ const CategoriesManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
     try {
+      const payload = {
+        name: formData.name.trim(),
+        slug: formData.slug.trim(),
+        description: (formData.description || '').trim()
+      }
+
       if (editingCategory) {
-        // Actualizar categoría existente
-        setCategories(categories.map(cat => 
-          cat.id === editingCategory.id 
-            ? { ...cat, ...formData, updatedAt: new Date().toISOString().split('T')[0] }
-            : cat
-        ))
+        // Actualizar categoría existente (PUT)
+        const res = await authenticatedFetch(`/api/admin/categories/${editingCategory.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data?.error || 'Error al actualizar la categoría')
+        const updated = data.category
+        setCategories(categories.map(cat => cat.id === updated.id ? updated : cat))
         alert('Categoría actualizada exitosamente')
       } else {
-        // Crear nueva categoría
-        const newCategory = {
-          id: Date.now().toString(),
-          ...formData,
-          articlesCount: 0,
-          createdAt: new Date().toISOString().split('T')[0],
-          updatedAt: new Date().toISOString().split('T')[0]
-        }
-        setCategories([...categories, newCategory])
+        // Crear nueva categoría (POST)
+        const res = await authenticatedFetch('/api/admin/categories', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data?.error || 'Error al crear la categoría')
+        const created = data.category
+        setCategories([...categories, created])
         alert('Categoría creada exitosamente')
       }
-      
+
       handleCloseModal()
     } catch (error) {
       console.error('Error al guardar categoría:', error)
-      alert('Error al guardar la categoría')
+      alert(error.message || 'Error al guardar la categoría')
     }
   }
 
@@ -144,21 +129,31 @@ const CategoriesManagement = () => {
     setFormData({
       name: category.name,
       slug: category.slug,
-      description: category.description
+      description: category.description || ''
     })
     setShowModal(true)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const category = categories.find(cat => cat.id === id)
-    
-    if (category.articlesCount > 0) {
-      alert(`No se puede eliminar la categoría "${category.name}" porque tiene ${category.articlesCount} artículos asociados.`)
+
+    if (!category) return
+
+    if (category.articleCount > 0) {
+      alert(`No se puede eliminar la categoría "${category.name}" porque tiene ${category.articleCount} artículos asociados.`)
       return
     }
-    
+
     if (confirm(`¿Estás seguro de que quieres eliminar la categoría "${category.name}"?`)) {
-      setCategories(categories.filter(cat => cat.id !== id))
+      try {
+        const res = await authenticatedFetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data?.error || 'Error al eliminar la categoría')
+        setCategories(categories.filter(cat => cat.id !== id))
+      } catch (err) {
+        console.error('Error eliminando categoría:', err)
+        alert(err.message || 'Error al eliminar la categoría')
+      }
     }
   }
 
@@ -263,7 +258,7 @@ const CategoriesManagement = () => {
                 <div className="flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center">
                     <FileText className="h-4 w-4 mr-1" />
-                    <span>{category.articlesCount} artículos</span>
+                    <span>{category.articleCount} artículos</span>
                   </div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />

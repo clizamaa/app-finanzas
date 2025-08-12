@@ -339,7 +339,7 @@ const ArticlesManagement = () => {
                           <Eye className="h-4 w-4" />
                         </Link>
                         <Link
-                          href={`/admin/articles/edit/${article.id}`}
+                          href={`/admin/articles/new?edit=${article.id}`}
                           className="text-blue-600 hover:text-blue-900 transition-colors"
                           title="Editar artículo"
                         >

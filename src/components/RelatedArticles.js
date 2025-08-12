@@ -15,12 +15,15 @@ const RelatedArticles = ({ currentArticleId, category }) => {
         if (response.ok) {
           const data = await response.json()
           
+          // La respuesta tiene estructura: { articles: [...], pagination: {...} }
+          const articles = data.articles || []
+          
           // Filtrar artículos relacionados: misma categoría, publicados, excluyendo el actual
-          const filtered = data
+          const filtered = articles
             .filter(article => 
-              article.status === 'published' &&
+              article.published === true &&
               article.id !== currentArticleId &&
-              article.category === category
+              article.category?.slug === category
             )
             .slice(0, 3) // Máximo 3 artículos relacionados
           

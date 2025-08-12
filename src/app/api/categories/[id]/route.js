@@ -1,82 +1,19 @@
 import { NextResponse } from 'next/server'
-
-// Simulación de base de datos en memoria (compartida con route.js principal)
-let categories = [
-  {
-    id: 1,
-    name: 'Presupuesto',
-    slug: 'presupuesto',
-    description: 'Artículos sobre planificación y gestión de presupuestos personales y familiares',
-    color: '#3B82F6',
-    icon: 'Calculator',
-    articleCount: 5,
-    featured: true,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z'
-  },
-  {
-    id: 2,
-    name: 'Inversiones',
-    slug: 'inversiones',
-    description: 'Guías y consejos sobre diferentes tipos de inversiones y estrategias',
-    color: '#10B981',
-    icon: 'TrendingUp',
-    articleCount: 8,
-    featured: true,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z'
-  },
-  {
-    id: 3,
-    name: 'Ahorro',
-    slug: 'ahorro',
-    description: 'Técnicas y estrategias para ahorrar dinero de manera efectiva',
-    color: '#F59E0B',
-    icon: 'PiggyBank',
-    articleCount: 6,
-    featured: true,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z'
-  },
-  {
-    id: 4,
-    name: 'Criptomonedas',
-    slug: 'criptomonedas',
-    description: 'Todo sobre el mundo de las criptomonedas y blockchain',
-    color: '#8B5CF6',
-    icon: 'Bitcoin',
-    articleCount: 3,
-    featured: false,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z'
-  },
-  {
-    id: 5,
-    name: 'Educación Financiera',
-    slug: 'educacion-financiera',
-    description: 'Conceptos básicos y avanzados de educación financiera',
-    color: '#EF4444',
-    icon: 'GraduationCap',
-    articleCount: 4,
-    featured: false,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z'
-  }
-]
+import { prisma } from '@/lib/prisma'
 
 // GET - Obtener categoría por ID
 export async function GET(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const { id } = params
     
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'ID de categoría no válido' },
-        { status: 400 }
-      )
-    }
-
-    const category = categories.find(c => c.id === id)
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { articles: true }
+        }
+      }
+    })
     
     if (!category) {
       return NextResponse.json(
@@ -85,7 +22,18 @@ export async function GET(request, { params }) {
       )
     }
 
-    return NextResponse.json(category)
+    // Formatear respuesta para compatibilidad
+    const formattedCategory = {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+      articleCount: category._count.articles,
+      createdAt: category.createdAt.toISOString(),
+      updatedAt: category.updatedAt.toISOString()
+    }
+
+    return NextResponse.json(formattedCategory)
   } catch (error) {
     console.error('Error al obtener categoría:', error)
     return NextResponse.json(

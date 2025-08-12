@@ -105,9 +105,9 @@ export async function POST(request) {
     const data = await request.json()
 
     // Validación básica
-    if (!data.title || !data.content || !data.category) {
+    if (!data.title || !data.content || !data.category || !data.image) {
       return NextResponse.json(
-        { error: 'Título, contenido y categoría son requeridos' },
+        { error: 'Título, contenido, categoría e imagen son requeridos' },
         { status: 400 }
       )
     }
@@ -148,7 +148,7 @@ export async function POST(request) {
         slug,
         excerpt: data.excerpt || '',
         content: data.content,
-        image: data.image || null,
+        image: typeof data.image === 'string' && data.image.trim() !== '' ? data.image.trim() : undefined,
         published: data.status === 'published' || !!data.published,
         featured: !!data.featured,
         views: 0,

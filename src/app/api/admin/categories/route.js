@@ -1,9 +1,36 @@
 import { NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 
-// GET - Obtener todas las categorías
+// Función para verificar el token JWT
+function verifyToken(request) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null
+  }
+
+  const token = authHeader.substring(7)
+  try {
+    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura'
+    const decoded = jwt.verify(token, secret)
+    return decoded
+  } catch (error) {
+    return null
+  }
+}
+
+// GET - Obtener todas las categorías (admin)
 export async function GET(request) {
   try {
+    // Verificar autenticación
+    const decoded = verifyToken(request)
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Token de autenticación inválido o faltante' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const sortBy = searchParams.get('sortBy') || 'name'
@@ -62,13 +89,22 @@ export async function GET(request) {
   }
 }
 
-// POST - Crear nueva categoría (solo para compatibilidad - usar admin API)
+// POST - Crear nueva categoría (admin)
 export async function POST(request) {
   try {
-    const body = await request.json()
+    // Verificar autenticación
+    const decoded = verifyToken(request)
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Token de autenticación inválido o faltante' },
+        { status: 401 }
+      )
+    }
+
+    const data = await request.json()
     
     // Validaciones básicas
-    if (!body.name || !body.slug) {
+    if (!data.name || !data.slug) {
       return NextResponse.json(
         { error: 'Nombre y slug son requeridos' },
         { status: 400 }
@@ -77,7 +113,9 @@ export async function POST(request) {
 
     // Verificar que el nombre sea único
     const existingByName = await prisma.category.findFirst({
-      where: { name: body.name.trim() }
+      where: { 
+        name: data.name.trim()
+      }
     })
     if (existingByName) {
       return NextResponse.json(
@@ -88,7 +126,7 @@ export async function POST(request) {
 
     // Verificar que el slug sea único
     const existingBySlug = await prisma.category.findUnique({
-      where: { slug: body.slug.toLowerCase().trim() }
+      where: { slug: data.slug.toLowerCase().trim() }
     })
     if (existingBySlug) {
       return NextResponse.json(
@@ -99,9 +137,9 @@ export async function POST(request) {
 
     const newCategory = await prisma.category.create({
       data: {
-        name: body.name.trim(),
-        slug: body.slug.toLowerCase().trim(),
-        description: body.description?.trim() || ''
+        name: data.name.trim(),
+        slug: data.slug.toLowerCase().trim(),
+        description: data.description?.trim() || ''
       },
       include: {
         _count: {
@@ -110,7 +148,6 @@ export async function POST(request) {
       }
     })
 
-    // Formatear respuesta para compatibilidad
     const formattedCategory = {
       id: newCategory.id,
       name: newCategory.name,
@@ -121,7 +158,10 @@ export async function POST(request) {
       updatedAt: newCategory.updatedAt.toISOString()
     }
 
-    return NextResponse.json(formattedCategory, { status: 201 })
+    return NextResponse.json({
+      message: 'Categoría creada exitosamente',
+      category: formattedCategory
+    }, { status: 201 })
   } catch (error) {
     console.error('Error al crear categoría:', error)
     return NextResponse.json(
@@ -129,12 +169,4 @@ export async function POST(request) {
       { status: 500 }
     )
   }
-}
-
-// PUT - No permitido en API pública (use endpoints de admin)
-export async function PUT() {
-  return NextResponse.json(
-    { error: 'Método no permitido en API pública. Use /api/admin/categories' },
-    { status: 405 }
-  )
 }

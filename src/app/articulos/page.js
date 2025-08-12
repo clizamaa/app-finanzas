@@ -17,8 +17,9 @@ const ArticulosPage = () => {
           throw new Error('Error al cargar los artículos')
         }
         const data = await response.json()
-        // Filtrar solo artículos publicados
-        const publishedArticles = data.filter(article => article.status === 'published')
+        // Filtrar solo artículos publicados desde la forma correcta de respuesta
+        const list = Array.isArray(data) ? data : (data.articles || [])
+        const publishedArticles = list.filter(article => article.published === true)
         setArticles(publishedArticles)
       } catch (err) {
         setError(err.message)
@@ -33,16 +34,20 @@ const ArticulosPage = () => {
   // Generar categorías dinámicamente basadas en los artículos
   const categories = [
     { name: 'Todos', slug: 'todos', count: articles.length },
-    ...Array.from(new Set(articles.map(a => a.category)))
-      .map(category => ({
-        name: category,
-        slug: category.toLowerCase().replace(/\s+/g, '-'),
-        count: articles.filter(a => a.category === category).length
-      }))
+    ...Array.from(new Map(
+      articles
+        .filter(a => a.category)
+        .map(a => [a.category.slug, { name: a.category.name, slug: a.category.slug }])
+    ).values()).map(cat => ({
+      ...cat,
+      count: articles.filter(a => a.category?.slug === cat.slug).length
+    }))
   ]
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'Fecha no disponible'
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'Fecha no disponible'
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
@@ -50,8 +55,8 @@ const ArticulosPage = () => {
     })
   }
 
-  const featuredArticles = articles.filter(article => article.featured)
-  const regularArticles = articles.filter(article => !article.featured)
+  // Mostrar todos los artículos juntos, ordenados por fecha de creación (más recientes primero)
+  const allArticles = articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
   if (loading) {
     return (
@@ -178,64 +183,7 @@ const ArticulosPage = () => {
 
           {/* Main Content */}
           <main className="lg:col-span-3">
-            {/* Featured Articles */}
-            {featuredArticles.length > 0 && (
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Artículos Destacados</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {featuredArticles.map((article) => (
-                    <article key={article.id} className="bg-light-gray rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-                      <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                        <span className="text-white font-semibold text-lg">{article.category.name}</span>
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-yellow-400 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
-                            Destacado
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="p-6">
-                        <div className="flex items-center text-sm text-gray-500 mb-2">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium mr-3">
-                            {article.category.name}
-                          </span>
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(article.publishedAt)}
-                        </div>
-                        
-                        <h3 className="text-xl font-bold text-gray-900 mb-3">
-                          <Link 
-                            href={`/articulos/${article.slug}`}
-                            className="hover:text-blue-600 transition-colors duration-200"
-                          >
-                            {article.title}
-                          </Link>
-                        </h3>
-                        
-                        <p className="text-gray-600 mb-4 line-clamp-3">
-                          {article.excerpt}
-                        </p>
-                        
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {article.readTime}
-                            </div>
-                            <div className="flex items-center">
-                              <User className="h-4 w-4 mr-1" />
-                              {article.views} vistas
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Regular Articles */}
+            {/* All Articles */}
             <section>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Todos los Artículos</h2>
@@ -250,12 +198,22 @@ const ArticulosPage = () => {
               </div>
               
               <div className="space-y-6">
-                {regularArticles.map((article) => (
+                {allArticles.map((article) => (
                   <article key={article.id} className="bg-light-gray rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="md:w-1/3">
-                        <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                          <span className="text-white font-semibold text-lg">{article.category.name}</span>
+                        <div className="h-48 rounded-lg overflow-hidden">
+                          {article.image ? (
+                            <img
+                              src={article.image}
+                              alt={article.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                              <span className="text-white font-semibold text-lg">{article.category.name}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -264,8 +222,13 @@ const ArticulosPage = () => {
                           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium mr-3">
                             {article.category.name}
                           </span>
+                          {article.featured && (
+                            <span className="bg-yellow-400 text-blue-900 px-2 py-1 rounded-full text-xs font-medium mr-3">
+                              Destacado
+                            </span>
+                          )}
                           <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(article.publishedAt)}
+                          {formatDate(article.createdAt || article.updatedAt)}
                         </div>
                         
                         <h3 className="text-xl font-bold text-gray-900 mb-3">

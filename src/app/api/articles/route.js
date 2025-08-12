@@ -1,106 +1,59 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-// Simulación de base de datos en memoria
-let articles = [
-  {
-    id: 1,
-    title: 'Cómo crear un presupuesto familiar efectivo',
-    content: 'Un presupuesto familiar es la base de una buena salud financiera...',
-    excerpt: 'Aprende a crear un presupuesto que realmente funcione para tu familia.',
-    category: 'Presupuesto',
-    tags: ['presupuesto', 'familia', 'finanzas'],
-    author: 'Admin',
-    slug: 'como-crear-presupuesto-familiar-efectivo',
-    featured: true,
-    status: 'published',
-    views: 1250,
-    publishedAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-    createdAt: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 2,
-    title: 'Inversiones para principiantes: Guía completa',
-    content: 'Invertir puede parecer intimidante al principio, pero con la información correcta...',
-    excerpt: 'Todo lo que necesitas saber para comenzar a invertir de manera inteligente.',
-    category: 'Inversiones',
-    tags: ['inversiones', 'principiantes', 'bolsa'],
-    author: 'Admin',
-    slug: 'inversiones-principiantes-guia-completa',
-    featured: false,
-    status: 'published',
-    views: 890,
-    publishedAt: '2024-01-12T14:30:00Z',
-    updatedAt: '2024-01-12T14:30:00Z',
-    createdAt: '2024-01-12T14:30:00Z'
-  },
-  {
-    id: 3,
-    title: 'Estrategias de ahorro para millennials',
-    content: 'Los millennials enfrentan desafíos únicos cuando se trata de ahorrar...',
-    excerpt: 'Técnicas de ahorro adaptadas a la realidad de los millennials.',
-    category: 'Ahorro',
-    tags: ['ahorro', 'millennials', 'estrategias'],
-    author: 'Admin',
-    slug: 'estrategias-ahorro-millennials',
-    featured: true,
-    status: 'draft',
-    views: 0,
-    publishedAt: null,
-    updatedAt: '2024-01-10T16:45:00Z',
-    createdAt: '2024-01-10T16:45:00Z'
-  }
-]
-
-let nextId = 4
-
-// GET - Obtener todos los artículos
+// GET - Obtener todos los artículos públicos (solo los publicados)
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
-    const status = searchParams.get('status')
     const featured = searchParams.get('featured')
     const search = searchParams.get('search')
     const limit = parseInt(searchParams.get('limit')) || 10
     const offset = parseInt(searchParams.get('offset')) || 0
 
-    let filteredArticles = [...articles]
+    // Construir filtro de búsqueda
+    const where = {
+      published: true, // Solo artículos publicados para el público
+    }
 
     // Filtrar por categoría
     if (category && category !== 'all') {
-      filteredArticles = filteredArticles.filter(article => article.category === category)
-    }
-
-    // Filtrar por estado
-    if (status && status !== 'all') {
-      filteredArticles = filteredArticles.filter(article => article.status === status)
+      where.category = {
+        slug: category
+      }
     }
 
     // Filtrar por destacados
     if (featured === 'true') {
-      filteredArticles = filteredArticles.filter(article => article.featured)
+      where.featured = true
     }
 
     // Filtrar por búsqueda
     if (search) {
-      const searchLower = search.toLowerCase()
-      filteredArticles = filteredArticles.filter(article => 
-        article.title.toLowerCase().includes(searchLower) ||
-        article.content.toLowerCase().includes(searchLower) ||
-        article.excerpt.toLowerCase().includes(searchLower)
-      )
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { excerpt: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } }
+      ]
     }
 
-    // Ordenar por fecha de actualización (más recientes primero)
-    filteredArticles.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-
-    // Paginación
-    const paginatedArticles = filteredArticles.slice(offset, offset + limit)
+    const [total, articles] = await Promise.all([
+      prisma.article.count({ where }),
+      prisma.article.findMany({
+        where,
+        include: { 
+          category: true, 
+          tags: true 
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit
+      })
+    ])
 
     return NextResponse.json({
-      articles: paginatedArticles,
-      total: filteredArticles.length,
+      articles,
+      total,
       limit,
       offset
     })

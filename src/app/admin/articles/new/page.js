@@ -1,20 +1,40 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { 
   ArrowLeft, 
   Save, 
   Eye, 
   Upload,
   X,
-  Plus
+  Plus,
+  Bold,
+  Italic,
+  Link as LinkIcon,
+  List,
+  ListOrdered,
+  Heading,
+  Quote,
+  Code,
+  Image,
+  Type
 } from 'lucide-react'
+
+// Importar SimpleMDE dinámicamente para evitar errores de SSR
+const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false })
+import 'easymde/dist/easymde.min.css'
 
 const NewArticle = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
+  const isEditing = !!editId
+  
   const [loading, setLoading] = useState(false)
+  const [loadingData, setLoadingData] = useState(false)
   const [preview, setPreview] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -29,12 +49,7 @@ const NewArticle = () => {
     tags: []
   })
 
-  const [categories, setCategories] = useState([
-    { id: '1', name: 'Reviews', slug: 'reviews' },
-    { id: '2', name: 'Tutoriales', slug: 'tutoriales' },
-    { id: '3', name: 'Análisis', slug: 'analisis' },
-    { id: '4', name: 'Noticias', slug: 'noticias' }
-  ])
+  const [categories, setCategories] = useState([])
 
   const [availableTags, setAvailableTags] = useState([
     { id: '1', name: 'Presupuesto', slug: 'presupuesto' },
@@ -46,9 +61,89 @@ const NewArticle = () => {
 
   const [newTag, setNewTag] = useState('')
 
-  // Generar slug automáticamente desde el título
+  // Cargar categorías desde la API
   useEffect(() => {
-    if (formData.title && !formData.slug) {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        if (response.ok) {
+          const data = await response.json()
+          setCategories(data.categories || [])
+        } else {
+          // Fallback to hardcoded categories if API fails
+          setCategories([
+            { id: '1', name: 'Reviews', slug: 'reviews' },
+            { id: '2', name: 'Tutoriales', slug: 'tutoriales' },
+            { id: '3', name: 'Análisis', slug: 'analisis' },
+            { id: '4', name: 'Noticias', slug: 'noticias' }
+          ])
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+        // Fallback to hardcoded categories
+        setCategories([
+          { id: '1', name: 'Reviews', slug: 'reviews' },
+          { id: '2', name: 'Tutoriales', slug: 'tutoriales' },
+          { id: '3', name: 'Análisis', slug: 'analisis' },
+          { id: '4', name: 'Noticias', slug: 'noticias' }
+        ])
+      }
+    }
+
+    fetchCategories()
+  }, [])
+
+  // Cargar datos del artículo si está en modo edición
+  useEffect(() => {
+    if (isEditing && editId) {
+      const fetchArticle = async () => {
+        try {
+          setLoadingData(true)
+          const token = localStorage.getItem('adminToken')
+          if (!token) {
+            throw new Error('No se encontró token de autorización')
+          }
+
+          const response = await fetch(`/api/admin/articles/${editId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+
+          if (!response.ok) {
+            throw new Error('Error al cargar el artículo')
+          }
+
+          const data = await response.json()
+          const article = data.article
+
+          setFormData({
+            title: article.title || '',
+            slug: article.slug || '',
+            excerpt: article.excerpt || '',
+            content: article.content || '',
+            categoryId: article.categoryId || '',
+            image: article.image || '',
+            featured: article.featured || false,
+            published: article.published || false,
+            tags: article.tags?.map(tag => tag.id) || []
+          })
+        } catch (error) {
+          console.error('Error fetching article:', error)
+          alert(`Error al cargar el artículo: ${error.message}`)
+          router.push('/admin/articles')
+        } finally {
+          setLoadingData(false)
+        }
+      }
+
+      fetchArticle()
+    }
+  }, [isEditing, editId, router])
+
+  // Generar slug automáticamente desde el título (solo para nuevos artículos)
+  useEffect(() => {
+    if (!isEditing && formData.title && !formData.slug) {
       const slug = formData.title
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
@@ -57,7 +152,7 @@ const NewArticle = () => {
         .trim()
       setFormData(prev => ({ ...prev, slug }))
     }
-  }, [formData.title])
+  }, [formData.title, isEditing])
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -99,12 +194,27 @@ const NewArticle = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
+    // Usar el estado actual de published del formulario
+    await handleSubmitWithStatus(formData.published)
+  }
 
+  const handleSaveDraft = async () => {
+    await handleSubmitWithStatus(false)
+  }
+
+  const handlePublish = async () => {
+    await handleSubmitWithStatus(true)
+  }
+
+  const handleSubmitWithStatus = async (publishedStatus) => {
+    const event = new Event('submit')
+    event.preventDefault()
+    
+    setLoading(true)
     try {
       // Validaciones básicas
-      if (!formData.title || !formData.content || !formData.categoryId) {
-        alert('Por favor completa todos los campos requeridos')
+      if (!formData.title || !formData.content || !formData.categoryId || !formData.image) {
+        alert('Por favor completa todos los campos requeridos (título, contenido, categoría e imagen)')
         return
       }
 
@@ -114,17 +224,32 @@ const NewArticle = () => {
         throw new Error('Por favor selecciona una categoría válida')
       }
 
-      // Preparar datos para la API
+      // Preparar datos para la API con el estado de publicación correcto
       const articleData = {
         title: formData.title,
         slug: formData.slug,
         excerpt: formData.excerpt,
         content: formData.content,
-        category: selectedCategory.slug,
+        categoryId: formData.categoryId,
         tags: formData.tags,
         featured: formData.featured,
-        status: formData.published ? 'published' : 'draft',
-        author: 'Admin'
+        published: publishedStatus, // Usar el parámetro directamente
+        author: 'Admin',
+        image: formData.image || null
+      }
+
+      // Si es modo edición, usar formato diferente
+      if (isEditing) {
+        // Para PUT/PATCH usar formato directo
+        delete articleData.author // El endpoint no espera este campo para updates
+        delete articleData.tags // Evitar enviar tags: requiere connect/disconnect y no está soportado en el endpoint
+      } else {
+        // Para POST, usar category slug como antes
+        const selectedCategory = categories.find(cat => cat.id === formData.categoryId)
+        if (selectedCategory) {
+          articleData.category = selectedCategory.slug
+          delete articleData.categoryId
+        }
       }
 
       // Obtener token de autorización
@@ -133,9 +258,13 @@ const NewArticle = () => {
         throw new Error('No se encontró token de autorización')
       }
 
-      // Llamada a la API para crear el artículo
-      const response = await fetch('/api/admin/articles', {
-        method: 'POST',
+      // Determinar URL y método según el modo
+      const url = isEditing ? `/api/admin/articles/${editId}` : '/api/admin/articles'
+      const method = isEditing ? 'PUT' : 'POST'
+
+      // Llamada a la API
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -145,32 +274,38 @@ const NewArticle = () => {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al crear el artículo')
+        throw new Error(errorData.error || `Error al ${isEditing ? 'actualizar' : 'crear'} el artículo`)
       }
 
       const result = await response.json()
-      alert('Artículo creado exitosamente')
+      
+      // Actualizar el estado local
+      setFormData(prev => ({ ...prev, published: publishedStatus }))
+      
+      alert(`Artículo ${publishedStatus ? 'publicado' : 'guardado como borrador'} exitosamente`)
       router.push('/admin/articles')
     } catch (error) {
-      console.error('Error al crear artículo:', error)
-      alert(`Error al crear el artículo: ${error.message}`)
+      console.error(`Error al ${isEditing ? 'actualizar' : 'crear'} artículo:`, error)
+      alert(`Error al ${isEditing ? 'actualizar' : 'crear'} el artículo: ${error.message}`)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSaveDraft = async () => {
-    setFormData(prev => ({ ...prev, published: false }))
-    await handleSubmit(new Event('submit'))
-  }
-
-  const handlePublish = async () => {
-    setFormData(prev => ({ ...prev, published: true }))
-    await handleSubmit(new Event('submit'))
+  // Si está cargando datos del artículo
+  if (loadingData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando datos del artículo...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 pb-8">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -183,8 +318,12 @@ const NewArticle = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Nuevo Artículo</h1>
-                <p className="text-gray-600 mt-1">Crea un nuevo artículo para el sitio</p>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {isEditing ? 'Editar Artículo' : 'Nuevo Artículo'}
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  {isEditing ? 'Modifica el artículo existente' : 'Crea un nuevo artículo para el sitio'}
+                </p>
               </div>
             </div>
             <div className="flex space-x-3">
@@ -270,20 +409,62 @@ const NewArticle = () => {
                   
                   <div>
                     <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                      Contenido del artículo *
+                      Contenido del artículo <span className="text-red-600">*</span>
                     </label>
-                    <textarea
-                      id="content"
-                      name="content"
-                      value={formData.content}
-                      onChange={handleInputChange}
-                      required
-                      rows={20}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                      placeholder="Escribe el contenido en Markdown...\n\n## Ejemplo de título\n\nEste es un párrafo de ejemplo.\n\n- Lista item 1\n- Lista item 2\n\n**Texto en negrita**"
-                    />
+                    <div className="prose max-w-none">
+                      <style jsx global>{`
+                        .editor-toolbar {
+                          position: sticky;
+                          top: 0;
+                          z-index: 10;
+                          background: #fff;
+                        }
+                        .EasyMDEContainer .CodeMirror, .editor-preview, .CodeMirror-scroll {
+                          max-height: 600px;
+                          min-height: 400px;
+                        }
+                        .EasyMDEContainer .CodeMirror-scroll {
+                          overflow: auto !important;
+                        }
+                        .editor-statusbar {
+                          position: sticky;
+                          bottom: 0;
+                          background: #fff;
+                        }
+                      `}</style>
+                      <SimpleMDE
+                        id="content"
+                        value={formData.content}
+                        onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                        options={{
+                          spellChecker: false,
+                          placeholder: 'Escribe el contenido en Markdown...\n\n## Ejemplo de título\n\nEste es un párrafo de ejemplo.\n\n- Lista item 1\n- Lista item 2\n\n**Texto en negrita**',
+                          status: ["lines", "words"],
+                          autosave: {
+                            enabled: true,
+                            uniqueId: 'new-article-content',
+                            delay: 1000,
+                          },
+                          toolbar: [
+                            'bold', 'italic', 'heading', '|',
+                            'quote', 'code', '|',
+                            'unordered-list', 'ordered-list', '|',
+                            'link', 'image', '|',
+                            'preview', 'side-by-side', 'fullscreen', '|',
+                            'guide'
+                          ],
+                          minHeight: "400px",
+                          maxHeight: "600px",
+                          initialValue: "",
+                        }}
+                        className="border border-gray-300 rounded-lg"
+                        style={{
+                          minHeight: "400px"
+                        }}
+                      />
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Puedes usar Markdown para formatear el contenido
+                      Usa la barra de herramientas para dar formato. El contenido se guarda como Markdown y se renderiza con estilos en la vista pública.
                     </p>
                   </div>
                 </div>
@@ -291,7 +472,7 @@ const NewArticle = () => {
 
               {/* Sidebar */}
               <div className="space-y-6">
-                {/* Publish */}
+                {/* Publication */}
                 <div className="bg-white rounded-lg shadow p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Publicación</h2>
                   
@@ -328,7 +509,7 @@ const NewArticle = () => {
                         className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                       >
                         <Save className="h-4 w-4 mr-2" />
-                        {loading ? 'Publicando...' : 'Publicar Artículo'}
+                        {loading ? (isEditing ? 'Actualizando...' : 'Publicando...') : (isEditing ? 'Actualizar Artículo' : 'Publicar Artículo')}
                       </button>
                     </div>
                   </div>
@@ -336,7 +517,7 @@ const NewArticle = () => {
 
                 {/* Category */}
                 <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Categoría</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Categoría <span className="text-red-600">*</span></h2>
                   
                   <select
                     name="categoryId"
@@ -356,35 +537,56 @@ const NewArticle = () => {
 
                 {/* Image */}
                 <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Imagen Destacada</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Imagen Destacada <span className="text-red-600">*</span></h2>
                   
                   <div>
                     <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
-                      URL de la imagen
+                      Subir imagen (JPG, PNG, WebP, GIF) Máx. 5MB
                     </label>
                     <input
-                      type="url"
+                      type="file"
                       id="image"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
+                      accept="image/*"
+                      required={!isEditing && !formData.image}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        try {
+                          const token = localStorage.getItem('adminToken')
+                          if (!token) throw new Error('No se encontró token de autorización')
+
+                          const form = new FormData()
+                          form.append('file', file)
+
+                          const uploadRes = await fetch('/api/upload', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: form
+                          })
+
+                          if (!uploadRes.ok) throw new Error('Error al subir imagen')
+
+                          const result = await uploadRes.json()
+                          setFormData(prev => ({ ...prev, image: result.url }))
+                        } catch (error) {
+                          console.error('Error uploading image:', error)
+                          alert('Error al subir la imagen')
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="https://ejemplo.com/imagen.jpg"
                     />
+                    {formData.image && (
+                      <div className="mt-4">
+                        <img
+                          src={formData.image}
+                          alt="Preview"
+                          className="w-full h-40 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
                   </div>
-                  
-                  {formData.image && (
-                    <div className="mt-4">
-                      <img
-                        src={formData.image}
-                        alt="Vista previa"
-                        className="w-full h-32 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
 
                 {/* Tags */}
@@ -393,8 +595,8 @@ const NewArticle = () => {
                   
                   {/* Selected Tags */}
                   {formData.tags.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-700 mb-2">Etiquetas seleccionadas:</p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-700">Etiquetas seleccionadas:</p>
                       <div className="flex flex-wrap gap-2">
                         {formData.tags.map(tagId => {
                           const tag = availableTags.find(t => t.id === tagId)
@@ -429,9 +631,9 @@ const NewArticle = () => {
                             key={tag.id}
                             type="button"
                             onClick={() => handleTagAdd(tag.id)}
-                            className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs hover:bg-gray-200 transition-colors"
+                            className="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-colors"
                           >
-                            + {tag.name}
+                            {tag.name}
                           </button>
                         ))
                       }
@@ -445,7 +647,7 @@ const NewArticle = () => {
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       placeholder="Nueva etiqueta"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
@@ -456,7 +658,7 @@ const NewArticle = () => {
                     <button
                       type="button"
                       onClick={handleNewTag}
-                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -467,7 +669,7 @@ const NewArticle = () => {
           </form>
         ) : (
           /* Preview */
-          <div className="bg-white rounded-lg shadow p-8">
+          <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="max-w-4xl mx-auto">
               <div className="mb-8">
                 {formData.image && (
