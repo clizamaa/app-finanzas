@@ -2,13 +2,23 @@
 
 import Link from 'next/link'
 import { Calendar, Clock, User, ArrowLeft, Filter, Grid, List } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 
 const CategoryPage = ({ params }) => {
+  const resolvedParams = use(params)
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [categoryName, setCategoryName] = useState('')
+
+  // Definir categorías disponibles
+  const categories = {
+    'analisis': { name: 'Análisis', icon: '📊' },
+    'reviews': { name: 'Reviews', icon: '⭐' },
+    'tutoriales': { name: 'Tutoriales', icon: '📚' },
+    'noticias': { name: 'Noticias', icon: '📰' },
+    'consejos': { name: 'Consejos', icon: '💡' }
+  }
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -20,7 +30,7 @@ const CategoryPage = ({ params }) => {
         const data = await response.json()
         
         // Filtrar artículos por categoría y solo los publicados
-        const categorySlug = params.slug
+        const categorySlug = resolvedParams.slug
         const filteredArticles = data.filter(article => 
           article.status === 'published' && 
           article.category.toLowerCase().replace(/\s+/g, '-') === categorySlug
@@ -32,8 +42,8 @@ const CategoryPage = ({ params }) => {
         if (filteredArticles.length > 0) {
           setCategoryName(filteredArticles[0].category)
         } else {
-          // Convertir slug a nombre legible
-          setCategoryName(categorySlug.split('-').map(word => 
+          // Usar el nombre de la categoría predefinida o convertir slug a nombre legible
+          setCategoryName(categories[categorySlug]?.name || categorySlug.split('-').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' '))
         }
@@ -45,7 +55,7 @@ const CategoryPage = ({ params }) => {
     }
 
     fetchArticles()
-  }, [params.slug])
+  }, [resolvedParams.slug])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -221,7 +231,7 @@ const CategoryPage = ({ params }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {Object.entries(categories)
-              .filter(([slug]) => slug !== params.slug)
+              .filter(([slug]) => slug !== resolvedParams.slug)
               .map(([slug, category]) => (
                 <Link
                   key={slug}
@@ -233,7 +243,7 @@ const CategoryPage = ({ params }) => {
                     {category.name}
                   </h4>
                   <p className="text-sm text-gray-600">
-                    {allArticles.filter(article => article.category === slug).length} artículos
+                    Explorar artículos
                   </p>
                 </Link>
               ))

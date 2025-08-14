@@ -12,8 +12,6 @@ const Navbar = () => {
     { name: 'Artículos', href: '/articulos' },
     { name: 'Reviews', href: '/reviews' },
     { name: 'Tutoriales', href: '/tutoriales' },
-    { name: 'Categorías', href: '/categorias' },
-    { name: 'Contacto', href: '/contacto' },
   ]
 
   return (
@@ -28,7 +26,7 @@ const Navbar = () => {
           </div>
 
           {/* Navigation Section - Segundo div */}
-          <div className="flex items-center ml-52 w-4/4">
+          <div className="flex items-center ml-[300px] w-4/4">
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
@@ -43,12 +41,6 @@ const Navbar = () => {
               </Link>
               <Link href="/tutoriales" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Tutoriales
-              </Link>
-              <Link href="/categorias" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Categorías
-              </Link>
-              <Link href="/contacto" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Contacto
               </Link>
               {/* Buscador */}
               <div className="relative">
@@ -110,20 +102,6 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
             >
               Tutoriales
-            </Link>
-            <Link
-              href="/categorias"
-              className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsOpen(false)}
-            >
-              Categorías
-            </Link>
-            <Link
-              href="/contacto"
-              className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsOpen(false)}
-            >
-              Contacto
             </Link>
             {/* Buscador móvil */}
             <div className="px-3 py-2">

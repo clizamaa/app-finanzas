@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Calendar, Clock, User, Share2, BookOpen, ArrowLeft } from 'lucide-react'
 import { showToast } from '@/lib/sweetAlert'
-import ReactMarkdown from 'react-markdown'
-import remarkBreaks from 'remark-breaks'
+// Ya no necesitamos ReactMarkdown porque el contenido viene en HTML
 import CommentSection from '@/components/CommentSection'
 import RelatedArticles from '@/components/RelatedArticles'
 import { useParams } from 'next/navigation'
@@ -210,9 +209,7 @@ const ArticlePage = () => {
 
         {/* Article Content */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <div className="prose prose-lg max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkBreaks]}>{article.content}</ReactMarkdown>
-          </div>
+          <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: article.content }} />
         </div>
 
         {/* Article Footer */}

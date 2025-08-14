@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { Star, Download, DollarSign, Shield, Smartphone, Filter, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Star, Filter, Search, Smartphone, Shield, ArrowRight } from 'lucide-react'
 
 // Metadata moved to layout.js due to 'use client' directive
 
@@ -208,235 +209,207 @@ const ReviewsPage = () => {
   }
 
   const getPriceColor = (price) => {
-    if (price === 'Gratis') return 'text-green-600'
-    if (price === 'Freemium') return 'text-blue-600'
-    return 'text-orange-600'
+    if (price === 'Gratis') return 'text-emerald'
+    if (price === 'Freemium') return 'text-navy'
+    return 'text-orange'
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Reviews de Apps Financieras
-          </h1>
-          <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto mb-8">
-            Descubre las mejores aplicaciones financieras del mercado con nuestras reviews detalladas y comparativas imparciales
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-2xl font-bold">{apps.length}+</div>
-              <div className="text-blue-100">Apps Revisadas</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-2xl font-bold">4.5★</div>
-              <div className="text-blue-100">Rating Promedio</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-2xl font-bold">50M+</div>
-              <div className="text-blue-100">Descargas Totales</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <div className="bg-white min-h-screen">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {/* Filters */}
+            <div className="bg-light-gray rounded-xl shadow-sm p-6 mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                {/* Search */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar aplicaciones..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald focus:border-transparent transition-all duration-200"
+                  />
+                </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Filters */}
-        <div className="bg-gray-100 rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar aplicaciones..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+                {/* Category Filter */}
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200 ${
+                        selectedCategory === category
+                          ? 'bg-emerald text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-emerald/10 hover:text-emerald'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                    selectedCategory === category
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                {/* Sort */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald focus:border-transparent"
                 >
-                  {category}
-                </button>
+                  <option value="rating">Mejor calificadas</option>
+                  <option value="downloads">Más descargadas</option>
+                  <option value="name">Nombre A-Z</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="mb-8">
+              <p className="text-gray-600 text-lg">
+                Mostrando {sortedApps.length} de {apps.length} aplicaciones
+                {selectedCategory !== 'Todas' && ` en ${selectedCategory}`}
+                {searchTerm && ` que coinciden con "${searchTerm}"`}
+              </p>
+            </div>
+
+            {/* Apps Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" id="reviews">
+              {sortedApps.map((app) => (
+                <div key={app.id} className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 ${app.featured ? 'ring-2 ring-emerald/20' : ''}`}>
+                  {app.featured && (
+                    <div className="bg-gradient-to-r from-emerald to-green-600 text-white px-4 py-3 text-sm font-bold text-center">
+                      ⭐ Recomendada por nuestros expertos
+                    </div>
+                  )}
+                  
+                  <div className="p-8">
+                    {/* App Header */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold text-navy mb-3">{app.name}</h3>
+                        <p className="text-gray-600 mb-4 text-lg leading-relaxed">{app.description}</p>
+                        
+                        {/* Rating */}
+                        <div className="flex items-center mb-3">
+                          <div className="flex items-center mr-3">
+                            {renderStars(app.rating)}
+                          </div>
+                          <span className="text-lg font-semibold text-navy">{app.rating}</span>
+                          <span className="text-gray-500 ml-2">({app.downloads} descargas)</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right ml-6">
+                        <div className={`text-xl font-bold ${getPriceColor(app.price)}`}>
+                          {app.price}
+                        </div>
+                        <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full mt-2">
+                          {app.category}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Platforms */}
+                    <div className="flex items-center mb-6">
+                      <Smartphone className="h-5 w-5 text-gray-400 mr-3" />
+                      <span className="text-gray-600 font-medium">
+                        Disponible en: {app.platform.join(', ')}
+                      </span>
+                    </div>
+
+                    {/* Features */}
+                    <div className="mb-6">
+                      <h4 className="text-lg font-semibold text-navy mb-3">Características principales:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {app.features.map((feature, index) => (
+                          <span key={index} className="bg-emerald/10 text-emerald px-3 py-2 rounded-full text-sm font-medium">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Pros and Cons */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <h4 className="text-sm font-semibold text-emerald mb-3 flex items-center">
+                          <span className="w-5 h-5 bg-emerald text-white rounded-full flex items-center justify-center text-xs mr-2">✓</span>
+                          Pros:
+                        </h4>
+                        <ul className="text-sm text-gray-600 space-y-2">
+                          {app.pros.slice(0, 2).map((pro, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="w-1.5 h-1.5 bg-emerald rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                              {pro}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-orange mb-3 flex items-center">
+                          <span className="w-5 h-5 bg-orange text-white rounded-full flex items-center justify-center text-xs mr-2">✗</span>
+                          Contras:
+                        </h4>
+                        <ul className="text-sm text-gray-600 space-y-2">
+                          {app.cons.slice(0, 2).map((con, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="w-1.5 h-1.5 bg-orange rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                              {con}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Security */}
+                    <div className="flex items-center mb-6">
+                      <Shield className="h-5 w-5 text-emerald mr-3" />
+                      <span className="text-gray-600 font-medium">Seguridad: {app.security}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href={`/reviews/${app.slug}`}
+                        className="bg-emerald text-white px-8 py-3 rounded-xl hover:bg-green-600 transition-all duration-200 font-semibold flex items-center"
+                      >
+                        Ver review completa
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                      <span className="text-sm text-gray-500">
+                        Actualizado: {new Date(app.lastUpdated).toLocaleDateString('es-ES')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
 
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="rating">Mejor calificadas</option>
-              <option value="downloads">Más descargadas</option>
-              <option value="name">Nombre A-Z</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-gray-600">
-            Mostrando {sortedApps.length} de {apps.length} aplicaciones
-            {selectedCategory !== 'Todas' && ` en ${selectedCategory}`}
-            {searchTerm && ` que coinciden con "${searchTerm}"`}
-          </p>
-        </div>
-
-        {/* Apps Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {sortedApps.map((app) => (
-            <div key={app.id} className={`bg-gray-100 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 ${app.featured ? 'ring-2 ring-blue-200' : ''}`}>
-              {app.featured && (
-                <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-4 py-2 text-sm font-bold text-center">
-                  ⭐ Recomendada por nuestros expertos
-                </div>
-              )}
-              
-              <div className="p-6">
-                {/* App Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{app.name}</h3>
-                    <p className="text-gray-600 mb-3">{app.description}</p>
-                    
-                    {/* Rating */}
-                    <div className="flex items-center mb-2">
-                      <div className="flex items-center mr-2">
-                        {renderStars(app.rating)}
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">{app.rating}</span>
-                      <span className="text-sm text-gray-500 ml-1">({app.downloads} descargas)</span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right ml-4">
-                    <div className={`text-lg font-bold ${getPriceColor(app.price)}`}>
-                      {app.price}
-                    </div>
-                    <div className="text-sm text-gray-500">{app.category}</div>
-                  </div>
-                </div>
-
-                {/* Platforms */}
-                <div className="flex items-center mb-4">
-                  <Smartphone className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-sm text-gray-600">
-                    Disponible en: {app.platform.join(', ')}
-                  </span>
-                </div>
-
-                {/* Features */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Características principales:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {app.features.map((feature, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Pros and Cons */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-green-700 mb-2">✓ Pros:</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {app.pros.slice(0, 2).map((pro, index) => (
-                        <li key={index}>• {pro}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-red-700 mb-2">✗ Contras:</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {app.cons.slice(0, 2).map((con, index) => (
-                        <li key={index}>• {con}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Security */}
-                <div className="flex items-center mb-4">
-                  <Shield className="h-4 w-4 text-green-600 mr-2" />
-                  <span className="text-sm text-gray-600">Seguridad: {app.security}</span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={`/reviews/${app.slug}`}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
-                  >
-                    Ver review completa
-                  </Link>
-                  <span className="text-xs text-gray-500">
-                    Actualizado: {new Date(app.lastUpdated).toLocaleDateString('es-ES')}
-                  </span>
-                </div>
+            {/* No Results */}
+            {sortedApps.length === 0 && (
+              <div className="bg-light-gray rounded-xl shadow-sm p-12 text-center">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-2xl font-bold text-navy mb-4">
+                  No encontramos resultados
+                </h3>
+                <p className="text-gray-600 mb-6 text-lg">
+                  Intenta ajustar tus filtros o términos de búsqueda
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('Todas')
+                    setSearchTerm('')
+                  }}
+                  className="bg-emerald text-white px-8 py-3 rounded-xl font-semibold hover:bg-green-600 transition-all duration-200"
+                >
+                  Limpiar filtros
+                </button>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
 
-        {/* No Results */}
-        {sortedApps.length === 0 && (
-          <div className="bg-gray-100 rounded-lg shadow-sm p-12 text-center">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              No encontramos resultados
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Intenta ajustar tus filtros o términos de búsqueda
-            </p>
-            <button
-              onClick={() => {
-                setSelectedCategory('Todas')
-                setSearchTerm('')
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
-            >
-              Limpiar filtros
-            </button>
+
           </div>
-        )}
-
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-8 mt-16 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">
-            ¿No encuentras la app que buscas?
-          </h2>
-          <p className="text-xl text-blue-100 mb-6">
-            Sugiérenos una aplicación para revisar y la incluiremos en nuestro próximo análisis
-          </p>
-          <Link
-            href="/contacto"
-            className="inline-flex items-center bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
-          >
-            Sugerir una app
-            <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
         </div>
-      </div>
-    </div>
-  )
-}
+      )
+    }
 
 export default ReviewsPage

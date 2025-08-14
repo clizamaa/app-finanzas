@@ -24,9 +24,8 @@ import {
 } from 'lucide-react'
 import { showError, showSuccess, showToast } from '@/lib/sweetAlert'
 
-// Importar SimpleMDE dinámicamente para evitar errores de SSR
-const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false })
-import 'easymde/dist/easymde.min.css'
+// Editor WYSIWYG con Quill
+import QuillEditor from '@/components/QuillEditor'
 
 const NewArticle = () => {
   const router = useRouter()
@@ -413,89 +412,14 @@ const NewArticle = () => {
                       Contenido del artículo <span className="text-red-600">*</span>
                     </label>
                     <div className="prose max-w-none">
-                      <style jsx global>{`
-                        .editor-toolbar {
-                          position: sticky;
-                          top: 0;
-                          z-index: 10;
-                          background: #fff;
-                        }
-                        .EasyMDEContainer .CodeMirror, .editor-preview, .CodeMirror-scroll {
-                          max-height: 600px;
-                          min-height: 400px;
-                        }
-                        .EasyMDEContainer .CodeMirror-scroll {
-                          overflow: auto !important;
-                        }
-                        .editor-statusbar {
-                          position: sticky;
-                          bottom: 0;
-                          background: #fff;
-                        }
-                      `}</style>
-                      <SimpleMDE
-                        id="content"
+                      <QuillEditor
                         value={formData.content}
                         onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-                        options={{
-                          spellChecker: false,
-                          placeholder: 'Escribe el contenido en Markdown...\n\n## Ejemplo de título\n\nEste es un párrafo de ejemplo.\n\n- Lista item 1\n- Lista item 2\n\n**Texto en negrita**',
-                          status: ["lines", "words"],
-                          autosave: {
-                            enabled: true,
-                            uniqueId: 'new-article-content',
-                            delay: 1000,
-                          },
-                          toolbar: [
-                            'bold', 'italic', 'heading', '|',
-                            'quote', 'code', '|',
-                            'unordered-list', 'ordered-list', '|',
-                            'link', 'image', '|',
-                            'preview', 'side-by-side', 'fullscreen', '|',
-                            'guide'
-                          ],
-                          minHeight: "400px",
-                          maxHeight: "600px",
-                          initialValue: "",
-                          // Configuraciones de CodeMirror para preservar saltos de línea
-                          codeMirrorOptions: {
-                            lineWrapping: true,
-                            lineNumbers: false,
-                            mode: 'markdown',
-                            theme: 'default',
-                            // Preservar saltos de línea al pegar
-                            extraKeys: {
-                              'Ctrl-V': function(cm) {
-                                // Interceptar el pegado para preservar saltos de línea
-                                navigator.clipboard.readText().then(text => {
-                                  // Preservar todos los saltos de línea
-                                  const preservedText = text.replace(/\r\n/g, '\n')
-                                  cm.replaceSelection(preservedText)
-                                }).catch(() => {
-                                  // Fallback para navegadores que no soportan clipboard API
-                                  cm.execCommand('paste')
-                                })
-                              },
-                              'Cmd-V': function(cm) {
-                                // Para Mac
-                                navigator.clipboard.readText().then(text => {
-                                  const preservedText = text.replace(/\r\n/g, '\n')
-                                  cm.replaceSelection(preservedText)
-                                }).catch(() => {
-                                  cm.execCommand('paste')
-                                })
-                              }
-                            }
-                          }
-                        }}
-                        className="border border-gray-300 rounded-lg"
-                        style={{
-                          minHeight: "400px"
-                        }}
+                        placeholder="Escribe el contenido del artículo aquí...\n\nPuedes usar el formato rich text para dar estilo a tu contenido."
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Usa la barra de herramientas para dar formato. El contenido se guarda como Markdown y se renderiza con estilos en la vista pública.
+                      Usa la barra de herramientas para dar formato al texto. El contenido se guarda como HTML y se renderiza directamente en la vista pública.
                     </p>
                   </div>
                 </div>
