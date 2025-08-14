@@ -1,67 +1,136 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-// Simulación de datos estadísticos
-const getStats = () => {
+// Obtener actividad reciente real de la base de datos
+const getRecentActivity = async () => {
+  const activities = []
+  
+  try {
+    // Obtener artículos recientes (últimos 10)
+    const recentArticles = await prisma.article.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: true,
+        category: true
+      }
+    })
+    
+    // Agregar artículos a la actividad
+    recentArticles.forEach(article => {
+      activities.push({
+        id: `article-${article.id}`,
+        type: 'article',
+        action: article.published ? 'published' : 'created',
+        title: article.title,
+        timestamp: article.createdAt.toISOString(),
+        author: article.author?.name || 'Usuario'
+      })
+      
+      // Si el artículo está destacado, agregar actividad adicional
+      if (article.featured) {
+        activities.push({
+          id: `featured-${article.id}`,
+          type: 'article',
+          action: 'featured',
+          title: article.title,
+          timestamp: article.updatedAt.toISOString(),
+          author: article.author?.name || 'Usuario'
+        })
+      }
+    })
+    
+    // Obtener categorías recientes (últimas 3)
+    const recentCategories = await prisma.category.findMany({
+      take: 3,
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    // Agregar categorías a la actividad
+    recentCategories.forEach(category => {
+      activities.push({
+        id: `category-${category.id}`,
+        type: 'category',
+        action: 'created',
+        title: category.name,
+        timestamp: category.createdAt.toISOString(),
+        author: 'Admin'
+      })
+    })
+    
+    // Obtener usuarios recientes (últimos 3)
+    const recentUsers = await prisma.user.findMany({
+      take: 3,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        role: true
+      }
+    })
+    
+    // Agregar usuarios a la actividad
+    recentUsers.forEach(user => {
+      activities.push({
+        id: `user-${user.id}`,
+        type: 'user',
+        action: 'created',
+        title: `${user.name} (${user.role?.name || 'Sin rol'})`,
+        timestamp: user.createdAt.toISOString(),
+        author: 'Admin'
+      })
+    })
+    
+    // Ordenar todas las actividades por fecha (más recientes primero) y tomar las primeras 8
+     return activities
+       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+       .slice(0, 8)
+      
+  } catch (error) {
+    console.error('Error obteniendo actividad reciente:', error)
+    return []
+  }
+}
+
+// Obtener estadísticas reales de la base de datos
+const getStats = async () => {
   const now = new Date()
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
   
+  // Contar artículos reales
+  const totalArticles = await prisma.article.count()
+  const publishedArticles = await prisma.article.count({ where: { published: true } })
+  const draftArticles = await prisma.article.count({ where: { published: false } })
+  
+  // Contar categorías reales
+  const totalCategories = await prisma.category.count()
+  
+  // Contar usuarios reales
+  const totalUsers = await prisma.user.count()
+  
+  // Calcular vistas totales
+  const viewsResult = await prisma.article.aggregate({
+    _sum: {
+      views: true
+    }
+  })
+  const totalViews = viewsResult._sum.views || 0
+  
   return {
     overview: {
-      totalArticles: 15,
-      publishedArticles: 12,
-      draftArticles: 3,
-      totalReviews: 8,
+      totalArticles,
+      publishedArticles,
+      draftArticles,
+      totalReviews: 8, // Mantenemos simulado por ahora
       publishedReviews: 6,
       draftReviews: 2,
-      totalTutorials: 10,
+      totalTutorials: 10, // Mantenemos simulado por ahora
       publishedTutorials: 7,
       draftTutorials: 3,
-      totalCategories: 5,
-      totalViews: 45280,
-      monthlyViews: 12450
+      totalCategories,
+      totalUsers,
+      totalViews,
+      monthlyViews: Math.floor(totalViews * 0.3) // Estimación del 30% del total
     },
-    recentActivity: [
-      {
-        id: 1,
-        type: 'article',
-        action: 'published',
-        title: 'Cómo crear un presupuesto familiar efectivo',
-        timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 horas atrás
-        author: 'Admin'
-      },
-      {
-        id: 2,
-        type: 'review',
-        action: 'created',
-        title: 'YNAB (You Need A Budget)',
-        timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 horas atrás
-        author: 'Admin'
-      },
-      {
-        id: 3,
-        type: 'tutorial',
-        action: 'updated',
-        title: 'Guía completa para invertir en ETFs',
-        timestamp: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), // 8 horas atrás
-        author: 'Admin'
-      },
-      {
-        id: 4,
-        type: 'category',
-        action: 'created',
-        title: 'Criptomonedas',
-        timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), // 1 día atrás
-        author: 'Admin'
-      },
-      {
-        id: 5,
-        type: 'article',
-        action: 'featured',
-        title: 'Estrategias de ahorro para millennials',
-        timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 días atrás
-        author: 'Admin'
-      }
-    ],
+    recentActivity: await getRecentActivity(),
     popularContent: {
       articles: [
         {
@@ -197,7 +266,7 @@ export async function GET(request) {
     const period = searchParams.get('period') || 'all' // all, month, week, day
     const type = searchParams.get('type') // overview, activity, popular, analytics, categories
 
-    const stats = getStats()
+    const stats = await getStats()
 
     // Si se solicita un tipo específico de estadísticas
     if (type) {

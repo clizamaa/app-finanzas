@@ -1,10 +1,53 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, Star, TrendingUp, Shield, Users, BookOpen, Quote, Calendar, Clock, Eye } from 'lucide-react'
 import FeaturedArticles from '@/components/FeaturedArticles'
-
-
+import AccessTracker from '@/components/AccessTracker'
+import { useState, useEffect } from 'react'
 
 export default function Home() {
+  const [latestArticle, setLatestArticle] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchLatestArticle = async () => {
+      try {
+        const response = await fetch('/api/admin/articles?limit=1&sortBy=createdAt&sortOrder=desc')
+        if (response.ok) {
+          const data = await response.json()
+          const publishedArticles = data.articles.filter(article => article.published === true)
+          if (publishedArticles.length > 0) {
+            setLatestArticle(publishedArticles[0])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching latest article:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLatestArticle()
+  }, [])
+
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Hace menos de 1 hora'
+    if (diffInHours < 24) return `Hace ${diffInHours} hora${diffInHours > 1 ? 's' : ''}`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `Hace ${diffInDays} día${diffInDays > 1 ? 's' : ''}`
+    
+    return date.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+  }
   const features = [
     {
       icon: BookOpen,
@@ -54,6 +97,7 @@ export default function Home() {
 
   return (
     <div className="bg-white">
+      <AccessTracker />
       {/* Hero Section - Estilo Blogger */}
       <section className="relative overflow-hidden bg-gradient-to-br from-navy via-slate-800 to-navy">
         <div className="absolute inset-0 bg-[url('/hero.png')] bg-cover bg-center opacity-10"></div>
@@ -90,7 +134,7 @@ export default function Home() {
               </div>
 
               {/* Stats en Hero */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 hidden">
                 {stats.map((stat, index) => {
                   const Icon = stat.icon
                   return (
@@ -108,29 +152,91 @@ export default function Home() {
 
             <div className="hidden lg:block">
               <div className="relative">
-                <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2">
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-emerald rounded-full flex items-center justify-center">
-                      <BookOpen className="h-6 w-6 text-white" />
+                {loading ? (
+                  <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2 animate-pulse">
+                    <div className="flex items-center mb-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                      <div className="ml-4">
+                        <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <h4 className="font-semibold text-navy">Último Artículo</h4>
-                      <p className="text-sm text-gray-500">Hace 2 horas</p>
+                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+                    <div className="flex items-center space-x-4">
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-navy mb-2">
-                    Las 10 Mejores Apps de Presupuesto 2024
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Análisis completo de las aplicaciones más populares para gestionar tu presupuesto personal...
-                  </p>
-                  <div className="flex items-center mt-4 text-sm text-gray-500">
-                    <Eye className="h-4 w-4 mr-1" />
-                    <span className="mr-4">2.5k vistas</span>
-                    <Clock className="h-4 w-4 mr-1" />
-                    <span>8 min lectura</span>
+                ) : latestArticle ? (
+                   <Link href={`/articulos/${latestArticle.slug}`} className="block group">
+                     <div className="relative bg-gradient-to-br from-white via-white to-blue-50 rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-500 cursor-pointer overflow-hidden border border-transparent hover:border-emerald/20">
+                       {/* Animated background gradient */}
+                       <div className="absolute inset-0 bg-gradient-to-r from-emerald/5 via-blue/5 to-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                       
+                       {/* Floating particles effect */}
+                       <div className="absolute top-4 right-4 w-2 h-2 bg-emerald/30 rounded-full animate-ping"></div>
+                       <div className="absolute top-8 right-8 w-1 h-1 bg-blue/40 rounded-full animate-pulse delay-300"></div>
+                       <div className="absolute bottom-6 left-6 w-1.5 h-1.5 bg-purple/30 rounded-full animate-bounce delay-500"></div>
+                       
+                       <div className="relative z-10">
+                         <div className="flex items-center mb-4">
+                           <div className="w-12 h-12 bg-gradient-to-r from-emerald to-green-600 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-emerald/25 group-hover:scale-110 transition-all duration-300">
+                             <BookOpen className="h-6 w-6 text-white group-hover:animate-pulse" />
+                           </div>
+                           <div className="ml-4">
+                             <h4 className="font-semibold text-navy group-hover:text-emerald transition-colors duration-300">Último Artículo</h4>
+                             <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors duration-300">{formatTimeAgo(latestArticle.createdAt)}</p>
+                           </div>
+                           <div className="ml-auto">
+                             <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-emerald group-hover:translate-x-1 transition-all duration-300" />
+                           </div>
+                         </div>
+                         <h3 className="text-lg font-bold text-navy mb-2 line-clamp-2 group-hover:text-emerald transition-colors duration-300">
+                           {latestArticle.title}
+                         </h3>
+                         <p className="text-gray-600 text-sm line-clamp-3 group-hover:text-gray-700 transition-colors duration-300">
+                           {latestArticle.excerpt}
+                         </p>
+                         <div className="flex items-center mt-4 text-sm text-gray-500 group-hover:text-gray-600 transition-colors duration-300">
+                           <Eye className="h-4 w-4 mr-1 group-hover:text-emerald transition-colors duration-300" />
+                           <span className="mr-4">{latestArticle.views?.toLocaleString() || '0'} vistas</span>
+                           <Clock className="h-4 w-4 mr-1 group-hover:text-emerald transition-colors duration-300" />
+                           <span>{Math.ceil((latestArticle.content?.length || 1000) / 200)} min lectura</span>
+                         </div>
+                         
+                         {/* Call to action badge */}
+                         <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-emerald/10 text-emerald text-xs font-medium group-hover:bg-emerald group-hover:text-white transition-all duration-300">
+                           <span>Leer ahora</span>
+                           <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-300" />
+                         </div>
+                       </div>
+                       
+                       {/* Shine effect */}
+                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000"></div>
+                       </div>
+                     </div>
+                   </Link>
+                ) : (
+                  <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2">
+                    <div className="flex items-center mb-4">
+                      <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="ml-4">
+                        <h4 className="font-semibold text-navy">Último Artículo</h4>
+                        <p className="text-sm text-gray-500">No disponible</p>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-navy mb-2">
+                      No hay artículos publicados
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Aún no hay artículos publicados en el sitio.
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

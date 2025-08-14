@@ -3,12 +3,18 @@
 import Link from 'next/link'
 import { Calendar, Clock, User, Search, Filter, BookOpen, Eye, ArrowRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import AccessTracker from '@/components/AccessTracker'
 
 const ArticulosPage = () => {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedCategory, setSelectedCategory] = useState('todos')
+  const [isAnimating, setIsAnimating] = useState(false)
   const articlesPerPage = 5
 
   useEffect(() => {
@@ -32,6 +38,30 @@ const ArticulosPage = () => {
 
     fetchArticles()
   }, [])
+
+  // Detectar parámetro de categoría en la URL
+  useEffect(() => {
+    const categoryParam = searchParams.get('category')
+    
+    // Si hay parámetro de categoría y es diferente al seleccionado
+    if (categoryParam && categoryParam !== selectedCategory) {
+      setIsAnimating(true)
+      setTimeout(() => {
+        setSelectedCategory(categoryParam)
+        setCurrentPage(1)
+        setTimeout(() => setIsAnimating(false), 50)
+      }, 150)
+    }
+    // Si no hay parámetro de categoría y no estamos en "todos", resetear a "todos"
+    else if (!categoryParam && selectedCategory !== 'todos') {
+      setIsAnimating(true)
+      setTimeout(() => {
+        setSelectedCategory('todos')
+        setCurrentPage(1)
+        setTimeout(() => setIsAnimating(false), 50)
+      }, 150)
+    }
+  }, [searchParams, selectedCategory])
 
   // Generar categorías dinámicamente basadas en los artículos
   const categories = [
@@ -57,8 +87,13 @@ const ArticulosPage = () => {
     })
   }
 
-  // Mostrar todos los artículos juntos, ordenados por fecha de creación (más recientes primero)
-  const allArticles = articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  // Filtrar artículos basándose en la categoría seleccionada
+  const filteredArticles = selectedCategory === 'todos' 
+    ? articles 
+    : articles.filter(article => article.category?.slug === selectedCategory)
+
+  // Mostrar artículos filtrados, ordenados por fecha de creación (más recientes primero)
+  const allArticles = filteredArticles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
   if (loading) {
     return (
@@ -99,39 +134,40 @@ const ArticulosPage = () => {
 
   return (
     <div className="bg-white min-h-screen">
+      <AccessTracker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <aside className="lg:col-span-1">
             <div className="bg-light-gray rounded-xl shadow-sm p-6 sticky top-8">
-              {/* Search */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-navy mb-3">Buscar</h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    placeholder="Buscar artículos..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-              </div>
-
               {/* Categories */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-navy mb-3">Categorías</h3>
                 <ul className="space-y-2">
                   {categories.map((category) => (
                     <li key={category.slug}>
-                      <Link
-                        href={category.slug === 'todos' ? '/articulos' : `/articulos/categoria/${category.slug}`}
-                        className="flex items-center justify-between text-gray-600 hover:text-emerald transition-colors duration-200 p-2 rounded-lg hover:bg-emerald/10"
+                      <button
+                        onClick={() => {
+                          // Limpiar parámetros URL para evitar conflictos
+                          router.replace('/articulos', { scroll: false })
+                          setIsAnimating(true)
+                          setTimeout(() => {
+                            setSelectedCategory(category.slug)
+                            setCurrentPage(1) // Reset to first page when filtering
+                            setTimeout(() => setIsAnimating(false), 50)
+                          }, 150)
+                        }}
+                        className={`w-full flex items-center justify-between transition-colors duration-200 p-2 rounded-lg hover:bg-emerald/10 ${
+                          selectedCategory === category.slug 
+                            ? 'text-emerald bg-emerald/10' 
+                            : 'text-gray-600 hover:text-emerald'
+                        }`}
                       >
                         <span className="font-medium">{category.name}</span>
                         <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-semibold">
                           {category.count}
                         </span>
-                      </Link>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -160,7 +196,12 @@ const ArticulosPage = () => {
             {/* All Articles */}
             <section>
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold text-navy">Todos los Artículos</h2>
+                <h2 className="text-3xl font-bold text-navy">
+                  {selectedCategory === 'todos' 
+                    ? 'Todos los Artículos' 
+                    : `Artículos de ${categories.find(cat => cat.slug === selectedCategory)?.name || 'Categoría'}`
+                  }
+                </h2>
                 <div className="flex items-center space-x-2">
                   <Filter className="h-5 w-5 text-gray-400" />
                   <select className="border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald focus:border-transparent">
@@ -171,11 +212,19 @@ const ArticulosPage = () => {
                 </div>
               </div>
               
-              <div className="space-y-8">
+              <div className={`space-y-8 transition-all duration-300 ${isAnimating ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'}`}>
                 {allArticles
                   .slice((currentPage - 1) * articlesPerPage, currentPage * articlesPerPage)
-                  .map((article) => (
-                    <article key={article.id} className="bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100">
+                  .map((article, index) => (
+                    <article 
+                      key={article.id} 
+                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 ${
+                        isAnimating ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
+                      }`}
+                      style={{
+                        transitionDelay: isAnimating ? '0ms' : `${index * 100}ms`
+                      }}
+                    >
                       <div className="flex flex-col md:flex-row gap-8">
                         <div className="md:w-1/3">
                           <div className="h-56 rounded-xl overflow-hidden">

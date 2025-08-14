@@ -27,6 +27,7 @@ model Article {
   excerpt     String
   content     String    @db.LongText
   image       String?
+  status      String    @default("draft") // draft, published, archived
   published   Boolean   @default(false)
   featured    Boolean   @default(false)
   views       Int       @default(0)
@@ -34,8 +35,11 @@ model Article {
   updatedAt   DateTime  @updatedAt
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
   comments    Comment[]
   tags        Tag[]
+  accessLogs  AccessLog[]
 }
 
 model Tag {
@@ -57,4 +61,47 @@ model Comment {
   parentId  String?
   parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
   replies   Comment[] @relation("CommentReplies")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  articles  Article[]
+  accessLogs AccessLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  permissions Json
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AccessLog {
+  id        String   @id @default(cuid())
+  ip        String
+  userAgent String?
+  method    String   @default("GET")
+  path      String
+  action    String   // visit_home, visit_articles, view_article, etc.
+  referrer  String?
+  articleId String?  // Si es una visita a un artículo específico
+  article   Article? @relation(fields: [articleId], references: [id])
+  userId    String?  // Si el usuario está autenticado
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  
+  @@index([ip])
+  @@index([path])
+  @@index([action])
+  @@index([createdAt])
 }

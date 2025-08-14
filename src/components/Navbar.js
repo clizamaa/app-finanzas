@@ -26,7 +26,7 @@ const Navbar = () => {
           </div>
 
           {/* Navigation Section - Segundo div */}
-          <div className="flex items-center ml-[300px] w-4/4">
+          <div className="flex items-center ml-[350px] w-4/4">
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
@@ -36,21 +36,16 @@ const Navbar = () => {
               <Link href="/articulos" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Artículos
               </Link>
-              <Link href="/reviews" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <Link href="/articulos?category=analisis" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Análisis
+              </Link>
+              <Link href="/articulos?category=reviews" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Reviews
               </Link>
-              <Link href="/tutoriales" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <Link href="/articulos?category=tutoriales" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Tutoriales
               </Link>
-              {/* Buscador */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="bg-white border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-400" />
-              </div>
+
             </div>
 
             {/* Mobile menu button */}
@@ -90,30 +85,27 @@ const Navbar = () => {
               Artículos
             </Link>
             <Link
-              href="/reviews"
+              href="/articulos?category=analisis"
+              className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              Análisis
+            </Link>
+            <Link
+              href="/articulos?category=reviews"
               className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setIsOpen(false)}
             >
               Reviews
             </Link>
             <Link
-              href="/tutoriales"
+              href="/articulos?category=tutoriales"
               className="text-gray-700 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setIsOpen(false)}
             >
               Tutoriales
             </Link>
-            {/* Buscador móvil */}
-            <div className="px-3 py-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-400" />
-              </div>
-            </div>
+
           </div>
         </div>
       )}

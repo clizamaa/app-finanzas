@@ -7,8 +7,10 @@ import { useState, useEffect } from 'react'
 const CommentSection = ({ articleId }) => {
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
+  const [userName, setUserName] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [replyText, setReplyText] = useState('')
+  const [replyUserName, setReplyUserName] = useState('')
   const [loading, setLoading] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
 
@@ -72,7 +74,7 @@ const CommentSection = ({ articleId }) => {
     setTimeout(() => {
       const comment = {
         id: Date.now(),
-        author: 'Usuario Anónimo',
+        author: userName.trim() || 'Usuario Anónimo',
         content: newComment,
         createdAt: new Date().toISOString(),
         likes: 0,
@@ -81,6 +83,7 @@ const CommentSection = ({ articleId }) => {
       
       setComments([comment, ...comments])
       setNewComment('')
+      setUserName('')
       setLoading(false)
     }, 1000)
   }
@@ -95,7 +98,7 @@ const CommentSection = ({ articleId }) => {
     setTimeout(() => {
       const reply = {
         id: Date.now(),
-        author: 'Usuario Anónimo',
+        author: replyUserName.trim() || 'Usuario Anónimo',
         content: replyText,
         createdAt: new Date().toISOString(),
         likes: 0,
@@ -114,6 +117,7 @@ const CommentSection = ({ articleId }) => {
       
       setComments(updatedComments)
       setReplyText('')
+      setReplyUserName('')
       setReplyTo(null)
       setLoading(false)
     }, 1000)
@@ -185,19 +189,35 @@ const CommentSection = ({ articleId }) => {
 
       {/* Comment Form */}
       <form onSubmit={handleSubmitComment} className="mb-8">
-        <div className="mb-4">
-          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-            Agregar un comentario
-          </label>
-          <textarea
-            id="comment"
-            rows={4}
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Comparte tu opinión sobre este artículo..."
-            required
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="md:col-span-1">
+            <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-2">
+              Tu nombre (opcional)
+            </label>
+            <input
+              type="text"
+              id="userName"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej: Juan Pérez"
+              maxLength={50}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+              Tu comentario
+            </label>
+            <textarea
+              id="comment"
+              rows={4}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Comparte tu opinión sobre este artículo..."
+              required
+            />
+          </div>
         </div>
         
         <div className="flex justify-between items-center">
@@ -266,20 +286,35 @@ const CommentSection = ({ articleId }) => {
                   {/* Reply Form */}
                   {replyTo === comment.id && (
                     <form onSubmit={(e) => handleSubmitReply(e, comment.id)} className="mt-4">
-                      <textarea
-                        rows={3}
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Escribe tu respuesta..."
-                        required
-                      />
-                      <div className="flex justify-end space-x-2 mt-2">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                        <div className="md:col-span-1">
+                          <input
+                            type="text"
+                            value={replyUserName}
+                            onChange={(e) => setReplyUserName(e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Tu nombre (opcional)"
+                            maxLength={50}
+                          />
+                        </div>
+                        <div className="md:col-span-3">
+                          <textarea
+                            rows={3}
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Escribe tu respuesta..."
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end space-x-2">
                         <button
                           type="button"
                           onClick={() => {
                             setReplyTo(null)
                             setReplyText('')
+                            setReplyUserName('')
                           }}
                           className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
                         >

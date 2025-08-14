@@ -250,6 +250,8 @@ const NewArticle = () => {
           articleData.category = selectedCategory.slug
           delete articleData.categoryId
         }
+        // Remover el campo author ya que se obtiene del token
+        delete articleData.author
       }
 
       // Obtener token de autorización

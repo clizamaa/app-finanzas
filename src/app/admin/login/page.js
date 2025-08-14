@@ -6,7 +6,7 @@ import { Eye, EyeOff, Lock, User, AlertCircle } from 'lucide-react'
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -117,22 +117,22 @@ const AdminLogin = () => {
         {/* Login Form */}
         <div className="bg-white rounded-lg shadow-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
+            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Usuario
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="Ingresa tu usuario"
+                  placeholder="Ingresa tu email"
                   required
                 />
               </div>
@@ -197,10 +197,20 @@ const AdminLogin = () => {
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Credenciales de prueba:</h3>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p><strong>Usuario:</strong> admin</p>
-              <p><strong>Contraseña:</strong> admin123</p>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Credenciales disponibles:</h3>
+            <div className="text-sm text-gray-600 space-y-3">
+              <div>
+                <p className="font-semibold text-blue-600">👤 Administrador:</p>
+                <p><strong>Email:</strong> admin@appfinanzas.com</p>
+                <p><strong>Contraseña:</strong> admin123</p>
+                <p className="text-xs text-gray-500">Permisos: Todos (crear, editar, publicar, eliminar)</p>
+              </div>
+              <div>
+                <p className="font-semibold text-green-600">✏️ Redactor:</p>
+                <p><strong>Email:</strong> editor@appfinanzas.com</p>
+                <p><strong>Contraseña:</strong> editor123</p>
+                <p className="text-xs text-gray-500">Permisos: Crear y editar (solo borradores)</p>
+              </div>
             </div>
           </div>
         </div>

@@ -63,7 +63,7 @@ export async function GET(request) {
       prisma.article.count({ where }),
       prisma.article.findMany({
         where,
-        include: { category: true, tags: true },
+        include: { category: true, tags: true, author: true },
         orderBy,
         skip: (page - 1) * limit,
         take: limit
@@ -152,10 +152,11 @@ export async function POST(request) {
         published: data.status === 'published' || !!data.published,
         featured: !!data.featured,
         views: 0,
+        author: { connect: { id: decoded.userId } }, // Conectar con el usuario autenticado
         category: { connect: { id: category.id } }
         // Nota: omitimos 'tags' en el create para evitar errores; se podrá manejar luego con 'connect' o creación de tags reales
       },
-      include: { category: true, tags: true }
+      include: { category: true, tags: true, author: true }
     })
 
     return NextResponse.json({

@@ -117,7 +117,7 @@ const AdminProtectedRoute = ({ children }) => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Bienvenido, {user?.username || 'Admin'}
+                Bienvenido, {user?.name || 'Usuario'} ({user?.role?.name || 'Sin rol'})
               </span>
               <button
                 onClick={handleLogout}

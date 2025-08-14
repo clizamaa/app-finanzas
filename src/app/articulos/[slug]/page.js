@@ -7,6 +7,7 @@ import { showToast } from '@/lib/sweetAlert'
 // Ya no necesitamos ReactMarkdown porque el contenido viene en HTML
 import CommentSection from '@/components/CommentSection'
 import RelatedArticles from '@/components/RelatedArticles'
+import AccessTracker from '@/components/AccessTracker'
 import { useParams } from 'next/navigation'
 import { getAuthToken } from '@/lib/auth'
 
@@ -121,6 +122,7 @@ const ArticlePage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      <AccessTracker articleId={article.id} />
       {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

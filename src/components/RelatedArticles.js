@@ -93,8 +93,18 @@ const RelatedArticles = ({ currentArticleId, category }) => {
           {relatedArticles.map((article) => (
             <article key={article.id} className="bg-light-gray rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
               {/* Article Image */}
-              <div className="h-48 bg-gradient-to-br from-navy to-emerald flex items-center justify-center">
-                <span className="text-white font-semibold text-lg">{article.category.name}</span>
+              <div className="relative h-48 overflow-hidden">
+                {article.image ? (
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full bg-gradient-to-br from-navy to-emerald flex items-center justify-center">
+                    <span className="text-white font-semibold text-lg">{article.category.name}</span>
+                  </div>
+                )}
               </div>
 
               <div className="p-6">

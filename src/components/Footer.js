@@ -6,22 +6,21 @@ const Footer = () => {
 
   const footerLinks = {
     'Contenido': [
+      { name: 'Inicio', href: '/' },
       { name: 'Artículos', href: '/articulos' },
-      { name: 'Reviews', href: '/reviews' },
-      { name: 'Tutoriales', href: '/tutoriales' },
-      { name: 'Categorías', href: '/categorias' },
+      { name: 'Análisis', href: '/articulos?category=analisis' },
+      { name: 'Reviews', href: '/articulos?category=reviews' },
+      { name: 'Tutoriales', href: '/articulos?category=tutoriales' },
     ],
     'Recursos': [
-      { name: 'Calculadoras', href: '/calculadoras' },
-      { name: 'Herramientas', href: '/herramientas' },
-      { name: 'Glosario', href: '/glosario' },
-      { name: 'FAQ', href: '/faq' },
+      { name: 'Calculadoras', href: null },
+      { name: 'Herramientas', href: null },
+      { name: 'Glosario', href: null },
+      { name: 'FAQ', href: null },
     ],
     'Empresa': [
       { name: 'Sobre Nosotros', href: '/sobre-nosotros' },
-
       { name: 'Política de Privacidad', href: '/privacidad' },
-      { name: 'Términos de Uso', href: '/terminos' },
     ],
   }
 
@@ -69,12 +68,18 @@ const Footer = () => {
               <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-gray-400 hover:text-white transition-colors duration-200"
-                    >
-                      {link.name}
-                    </Link>
+                    {link.href ? (
+                      <Link
+                        href={link.href}
+                        className="text-gray-400 hover:text-white transition-colors duration-200"
+                      >
+                        {link.name}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-400">
+                        {link.name}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -92,9 +97,6 @@ const Footer = () => {
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/privacidad" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
               Privacidad
-            </Link>
-            <Link href="/terminos" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
-              Términos
             </Link>
             <Link href="/cookies" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
               Cookies

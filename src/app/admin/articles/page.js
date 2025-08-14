@@ -268,6 +268,9 @@ const ArticlesManagement = () => {
                     Artículo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Autor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Categoría
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -303,6 +306,13 @@ const ArticlesManagement = () => {
                           <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                             {article.excerpt}
                           </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="text-sm font-medium text-gray-900">
+                          {article.author?.name || 'Sin autor'}
                         </div>
                       </div>
                     </td>

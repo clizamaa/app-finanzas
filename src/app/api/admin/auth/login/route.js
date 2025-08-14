@@ -1,53 +1,77 @@
 import { NextResponse } from 'next/server'
+import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { PrismaClient } from '@prisma/client'
 
-// Credenciales de administrador (en producción deberían estar en base de datos con hash)
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123' // En producción usar bcrypt
-}
+const prisma = new PrismaClient()
 
-// Clave secreta para JWT (en producción usar variable de entorno)
-const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura'
+// Clave secreta para JWT (en producción debería estar en variables de entorno)
+const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
 
 export async function POST(request) {
   try {
-    const { username, password } = await request.json()
+    const { email, password } = await request.json()
 
-    // Validar que se proporcionen credenciales
-    if (!username || !password) {
+    // Validar que se proporcionen email y contraseña
+    if (!email || !password) {
       return NextResponse.json(
-        { message: 'Usuario y contraseña son requeridos' },
+        { message: 'Email y contraseña son requeridos' },
         { status: 400 }
       )
     }
 
-    // Verificar credenciales
-    if (username !== ADMIN_CREDENTIALS.username || password !== ADMIN_CREDENTIALS.password) {
+    // Buscar usuario por email incluyendo el rol
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        role: true
+      }
+    })
+
+    if (!user) {
       return NextResponse.json(
-        { message: 'Credenciales incorrectas' },
+        { message: 'Credenciales inválidas' },
         { status: 401 }
       )
     }
 
-    // Generar token JWT
+    // Verificar contraseña
+    const isValidPassword = await bcrypt.compare(password, user.password)
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { message: 'Credenciales inválidas' },
+        { status: 401 }
+      )
+    }
+
+    // Crear token JWT
     const token = jwt.sign(
       { 
-        username: username,
-        role: 'admin',
-        iat: Math.floor(Date.now() / 1000)
+        userId: user.id, 
+        email: user.email, 
+        role: user.role.name,
+        permissions: user.role.permissions
       },
       JWT_SECRET,
       { expiresIn: '24h' }
     )
 
+    // Preparar datos del usuario (sin contraseña)
+    const userData = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: {
+        name: user.role.name,
+        description: user.role.description,
+        permissions: user.role.permissions
+      }
+    }
+
     return NextResponse.json({
       message: 'Login exitoso',
-      token: token,
-      user: {
-        username: username,
-        role: 'admin'
-      }
+      token,
+      user: userData
     })
 
   } catch (error) {
@@ -56,10 +80,12 @@ export async function POST(request) {
       { message: 'Error interno del servidor' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
-// Endpoint para verificar token
+// Endpoint para verificar token (GET)
 export async function GET(request) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -71,20 +97,45 @@ export async function GET(request) {
       )
     }
 
-    const token = authHeader.substring(7)
-    
+    const token = authHeader.substring(7) // Remover 'Bearer '
+
     try {
       const decoded = jwt.verify(token, JWT_SECRET)
-      return NextResponse.json({
-        valid: true,
-        user: {
-          username: decoded.username,
-          role: decoded.role
+      
+      // Buscar usuario actualizado
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        include: {
+          role: true
         }
       })
+
+      if (!user) {
+        return NextResponse.json(
+          { message: 'Usuario no encontrado' },
+          { status: 401 }
+        )
+      }
+
+      const userData = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: {
+          name: user.role.name,
+          description: user.role.description,
+          permissions: user.role.permissions
+        }
+      }
+
+      return NextResponse.json({
+        message: 'Token válido',
+        user: userData
+      })
+
     } catch (jwtError) {
       return NextResponse.json(
-        { message: 'Token inválido o expirado' },
+        { message: 'Token inválido' },
         { status: 401 }
       )
     }
@@ -95,5 +146,7 @@ export async function GET(request) {
       { message: 'Error interno del servidor' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }

@@ -4,6 +4,7 @@ import { DefaultSeo } from 'next-seo';
 import defaultSEOConfig from '../../next-seo.config';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import CookieBanner from '@/components/CookieBanner';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -66,6 +67,7 @@ export default function RootLayout({ children }) {
             {children}
           </main>
           <Footer />
+          <CookieBanner />
         </div>
       </body>
     </html>
