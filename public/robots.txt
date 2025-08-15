@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /api/
+
+# Allow specific public API endpoints
+Allow: /api/articles
+Allow: /api/categories
+Allow: /api/reviews
+Allow: /api/tutorials
+
+# Sitemap
+Sitemap: https://appfinanzashoy.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

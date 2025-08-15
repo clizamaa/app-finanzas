@@ -195,24 +195,7 @@ const AdminLogin = () => {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Credenciales disponibles:</h3>
-            <div className="text-sm text-gray-600 space-y-3">
-              <div>
-                <p className="font-semibold text-blue-600">👤 Administrador:</p>
-                <p><strong>Email:</strong> admin@appfinanzas.com</p>
-                <p><strong>Contraseña:</strong> admin123</p>
-                <p className="text-xs text-gray-500">Permisos: Todos (crear, editar, publicar, eliminar)</p>
-              </div>
-              <div>
-                <p className="font-semibold text-green-600">✏️ Redactor:</p>
-                <p><strong>Email:</strong> editor@appfinanzas.com</p>
-                <p><strong>Contraseña:</strong> editor123</p>
-                <p className="text-xs text-gray-500">Permisos: Crear y editar (solo borradores)</p>
-              </div>
-            </div>
-          </div>
+
         </div>
 
         {/* Footer */}

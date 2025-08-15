@@ -7,18 +7,18 @@ function getClientIP(request) {
   const realIP = request.headers.get('x-real-ip')
   const cfConnectingIP = request.headers.get('cf-connecting-ip')
   
+  let ip = '127.0.0.1' // Fallback para desarrollo local
+  
   if (forwarded) {
-    return forwarded.split(',')[0].trim()
-  }
-  if (realIP) {
-    return realIP
-  }
-  if (cfConnectingIP) {
-    return cfConnectingIP
+    ip = forwarded.split(',')[0].trim()
+  } else if (realIP) {
+    ip = realIP
+  } else if (cfConnectingIP) {
+    ip = cfConnectingIP
   }
   
-  // Fallback para desarrollo local
-  return '127.0.0.1'
+  // Eliminar el prefijo ::ffff: de las direcciones IPv4 mapeadas en IPv6
+  return ip.replace(/^::ffff:/, '')
 }
 
 // POST - Registrar un nuevo log de acceso

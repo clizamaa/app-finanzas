@@ -4,6 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { Star, Filter, Search, Smartphone, Shield, ArrowRight } from 'lucide-react'
+// import { NextSeo } from 'next-seo' // Comentado temporalmente para resolver build
+
+// Deshabilitar prerendering estático
+export const dynamic = 'force-dynamic'
 
 // Metadata moved to layout.js due to 'use client' directive
 
@@ -215,7 +219,8 @@ const ReviewsPage = () => {
   }
 
   return (
-        <div className="bg-white min-h-screen">
+    <>
+      <div className="bg-white min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/* Filters */}
             <div className="bg-light-gray rounded-xl shadow-sm p-6 mb-8">
@@ -409,7 +414,8 @@ const ReviewsPage = () => {
 
           </div>
         </div>
-      )
-    }
+      </>
+    )
+}
 
 export default ReviewsPage

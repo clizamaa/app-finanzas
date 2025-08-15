@@ -2,9 +2,13 @@
 
 import Link from 'next/link'
 import { Calendar, Clock, User, Search, Filter, BookOpen, Eye, ArrowRight } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import AccessTracker from '@/components/AccessTracker'
+import { NextSeo } from 'next-seo'
+
+// Deshabilitar prerendering estático
+export const dynamic = 'force-dynamic'
 
 const ArticulosPage = () => {
   const searchParams = useSearchParams()
@@ -133,7 +137,36 @@ const ArticulosPage = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
+      <NextSeo
+        title="Artículos de Finanzas Personales - Reviews y Guías Completas"
+        description="Descubre los mejores artículos sobre finanzas personales, aplicaciones financieras y consejos para gestionar tu dinero de manera inteligente."
+        canonical={`${process.env.SITE_URL || 'https://appfinanzashoy.com'}/articulos`}
+        openGraph={{
+          title: 'Artículos de Finanzas Personales - AppFinanzasHoy',
+          description: 'Reviews detalladas de apps financieras y guías completas para mejorar tus finanzas personales',
+          url: `${process.env.SITE_URL || 'https://appfinanzashoy.com'}/articulos`,
+          type: 'website',
+          images: [
+            {
+              url: '/images/og-image.svg',
+              width: 1200,
+              height: 630,
+              alt: 'AppFinanzasHoy - Artículos de Finanzas Personales',
+            },
+          ],
+        }}
+        additionalMetaTags={[
+          {
+            name: 'keywords',
+            content: 'artículos finanzas, reviews apps financieras, guías dinero, finanzas personales, presupuesto, ahorro, inversión'
+          },
+          {
+            name: 'author',
+            content: 'AppFinanzasHoy Team'
+          }
+        ]}
+      />
       <AccessTracker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -358,4 +391,13 @@ const ArticulosPage = () => {
   )
 }
 
-export default ArticulosPage
+// Componente wrapper con Suspense
+const ArticulosPageWrapper = () => {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div></div>}>
+      <ArticulosPage />
+    </Suspense>
+  )
+}
+
+export default ArticulosPageWrapper

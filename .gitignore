@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.production.example
 
 # vercel
 .vercel
@@ -39,5 +40,32 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# deploy files
+deploy-*/
+deploy-*.zip
+deploy-info.json
+
+# logs
+logs/
+*.log
+
+# uploads (archivos subidos por usuarios)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# cache
+.cache/
+.temp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
 
 /src/generated/prisma

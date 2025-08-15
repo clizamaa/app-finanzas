@@ -15,7 +15,9 @@ import {
   Filter,
   Search,
   Download,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
 
@@ -28,6 +30,7 @@ const LogsPage = () => {
   const [selectedDate, setSelectedDate] = useState('')
   const [stats, setStats] = useState({})
   const [pagination, setPagination] = useState({})
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Datos de ejemplo para los logs
   const sampleLogs = [
@@ -112,9 +115,10 @@ const LogsPage = () => {
   const fetchLogs = async (page = 1) => {
     try {
       setLoading(true)
+      setCurrentPage(page)
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '50'
+        limit: '20'
       })
       
       if (selectedAction !== 'all') {
@@ -156,6 +160,7 @@ const LogsPage = () => {
   // Refetch logs when filters change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
+      setCurrentPage(1)
       fetchLogs(1)
     }, 500) // Debounce para evitar muchas llamadas
 
@@ -463,6 +468,92 @@ const LogsPage = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            
+            {/* Paginación */}
+            {!loading && filteredLogs.length > 0 && pagination.totalPages > 1 && (
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => fetchLogs(currentPage - 1)}
+                    disabled={currentPage <= 1}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => fetchLogs(currentPage + 1)}
+                    disabled={currentPage >= pagination.totalPages}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Mostrando{' '}
+                      <span className="font-medium">{((currentPage - 1) * 20) + 1}</span>
+                      {' '}a{' '}
+                      <span className="font-medium">
+                        {Math.min(currentPage * 20, pagination.totalCount || 0)}
+                      </span>
+                      {' '}de{' '}
+                      <span className="font-medium">{pagination.totalCount || 0}</span>
+                      {' '}resultados
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => fetchLogs(currentPage - 1)}
+                        disabled={currentPage <= 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="sr-only">Anterior</span>
+                        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      
+                      {/* Números de página */}
+                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        let pageNumber;
+                        if (pagination.totalPages <= 5) {
+                          pageNumber = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNumber = i + 1;
+                        } else if (currentPage >= pagination.totalPages - 2) {
+                          pageNumber = pagination.totalPages - 4 + i;
+                        } else {
+                          pageNumber = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => fetchLogs(pageNumber)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              pageNumber === currentPage
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+                      
+                      <button
+                        onClick={() => fetchLogs(currentPage + 1)}
+                        disabled={currentPage >= pagination.totalPages}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="sr-only">Siguiente</span>
+                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
               </div>
             )}
           </div>

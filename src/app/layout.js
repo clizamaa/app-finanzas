@@ -5,6 +5,8 @@ import defaultSEOConfig from '../../next-seo.config';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CookieBanner from '@/components/CookieBanner';
+import AccessTracker from '@/components/AccessTracker';
+import StructuredData from '@/components/StructuredData';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,10 +33,10 @@ export const metadata = {
     description: "Descubre las mejores aplicaciones de finanzas personales, reviews detalladas y tutoriales para gestionar tu dinero de manera inteligente.",
     images: [
       {
-        url: "/images/og-image.jpg",
+        url: "/images/og-image.svg",
         width: 1200,
         height: 630,
-        alt: "AppFinanzasHoy - Finanzas Personales",
+        alt: "AppFinanzasHoy - Tu Guía de Finanzas Personales",
       },
     ],
   },
@@ -42,7 +44,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "AppFinanzasHoy - Tu Guía de Finanzas Personales",
     description: "Descubre las mejores aplicaciones de finanzas personales, reviews detalladas y tutoriales para gestionar tu dinero de manera inteligente.",
-    images: ["/images/og-image.jpg"],
+    images: ["/images/og-image.svg"],
   },
   robots: {
     index: true,
@@ -68,6 +70,9 @@ export default function RootLayout({ children }) {
           </main>
           <Footer />
           <CookieBanner />
+          <AccessTracker />
+          <StructuredData type="website" />
+          <StructuredData type="organization" />
         </div>
       </body>
     </html>

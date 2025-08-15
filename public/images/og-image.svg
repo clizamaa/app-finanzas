@@ -1,0 +1,59 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Decorative Elements -->
+  <circle cx="100" cy="100" r="50" fill="#ffffff" opacity="0.1"/>
+  <circle cx="1100" cy="530" r="80" fill="#ffffff" opacity="0.08"/>
+  <rect x="900" y="50" width="200" height="200" rx="20" fill="url(#cardGradient)" opacity="0.3"/>
+  
+  <!-- Main Content Container -->
+  <rect x="80" y="120" width="1040" height="390" rx="20" fill="url(#cardGradient)" stroke="#ffffff" stroke-width="1" opacity="0.2"/>
+  
+  <!-- Logo/Icon Area -->
+  <rect x="120" y="160" width="80" height="80" rx="12" fill="#10b981"/>
+  <text x="160" y="210" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">$</text>
+  
+  <!-- Main Title -->
+  <text x="240" y="200" fill="#ffffff" font-family="Arial, sans-serif" font-size="48" font-weight="bold">AppFinanzasHoy</text>
+  
+  <!-- Subtitle -->
+  <text x="240" y="240" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="24">Tu Guía de Finanzas Personales</text>
+  
+  <!-- Description -->
+  <text x="120" y="300" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="20">Descubre las mejores aplicaciones de finanzas personales</text>
+  <text x="120" y="330" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="20">Reviews detalladas y tutoriales para gestionar tu dinero</text>
+  
+  <!-- Feature Icons -->
+  <g transform="translate(120, 380)">
+    <!-- Reviews Icon -->
+    <rect x="0" y="0" width="60" height="60" rx="8" fill="#3b82f6" opacity="0.8"/>
+    <text x="30" y="40" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="24">★</text>
+    <text x="30" y="80" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="14">Reviews</text>
+    
+    <!-- Tutorials Icon -->
+    <rect x="120" y="0" width="60" height="60" rx="8" fill="#10b981" opacity="0.8"/>
+    <text x="150" y="40" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="24">📚</text>
+    <text x="150" y="80" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="14">Tutoriales</text>
+    
+    <!-- Security Icon -->
+    <rect x="240" y="0" width="60" height="60" rx="8" fill="#f59e0b" opacity="0.8"/>
+    <text x="270" y="40" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="24">🛡️</text>
+    <text x="270" y="80" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="14">Seguridad</text>
+  </g>
+  
+  <!-- Website URL -->
+  <text x="600" y="580" fill="#94a3b8" font-family="Arial, sans-serif" font-size="18" text-anchor="middle">appfinanzashoy.com</text>
+</svg>

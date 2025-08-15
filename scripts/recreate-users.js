@@ -7,6 +7,10 @@ async function recreateUsers() {
   try {
     console.log('🔧 Recreando usuarios y roles...')
     
+    // Eliminar artículos primero (para evitar restricciones de clave foránea)
+    await prisma.article.deleteMany({})
+    console.log('✅ Artículos eliminados')
+    
     // Eliminar usuarios existentes
     await prisma.user.deleteMany({})
     console.log('✅ Usuarios eliminados')

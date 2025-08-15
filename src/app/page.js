@@ -125,12 +125,7 @@ export default function Home() {
                   Explorar Contenido
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
-                <Link
-                  href="/reviews"
-                  className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-navy transition-all duration-200"
-                >
-                  Ver Reviews
-                </Link>
+
               </div>
 
               {/* Stats en Hero */}
