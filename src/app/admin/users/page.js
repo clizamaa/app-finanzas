@@ -596,7 +596,7 @@ const UsersManagement = () => {
                   disabled={formLoading}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {formLoading ? 'Creando...' : 'Crear Usuario'}
+                  {formLoading ? (editingUser ? 'Actualizando...' : 'Creando...') : (editingUser ? 'Actualizar Usuario' : 'Crear Usuario')}
                 </button>
               </div>
             </form>

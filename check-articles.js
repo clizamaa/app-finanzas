@@ -7,8 +7,8 @@ async function checkArticles() {
     
     const articles = await prisma.article.findMany({
       include: {
-        category: true,
-        author: true
+        Category: true,
+        User: true
       },
       orderBy: {
         createdAt: 'desc'
@@ -29,8 +29,8 @@ async function checkArticles() {
         console.log(`  Publicado: ${article.published || 'No especificado'}`);
         console.log(`  Destacado: ${article.featured || 'No especificado'}`);
         console.log(`  Vistas: ${article.views || '0'}`);
-        console.log(`  Categoría: ${article.category?.name || 'Sin categoría'}`);
-        console.log(`  Autor: ${article.author?.name || 'Sin autor'}`);
+        console.log(`  Categoría: ${article.Category?.name || 'Sin categoría'}`);
+      console.log(`  Autor: ${article.User?.name || 'Sin autor'}`);
         console.log(`  Fecha creación: ${article.createdAt || 'No especificada'}`);
         console.log(`  Última actualización: ${article.updatedAt || 'No especificada'}`);
         console.log(`  Extracto: ${article.excerpt ? article.excerpt.substring(0, 100) + '...' : 'Sin extracto'}`);

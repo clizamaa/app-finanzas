@@ -12,6 +12,11 @@ const QuillEditor = ({ value, onChange, placeholder = 'Escribe tu contenido aquÃ
   useEffect(() => {
     const loadQuill = async () => {
       if (typeof window !== 'undefined' && quillRef.current && !quillInstanceRef.current) {
+        // Verificar que el elemento estÃ© en el DOM
+        if (!document.contains(quillRef.current)) {
+          return
+        }
+        
         // Limpiar completamente el contenedor
         quillRef.current.innerHTML = ''
         
@@ -114,9 +119,13 @@ const QuillEditor = ({ value, onChange, placeholder = 'Escribe tu contenido aquÃ
       }
     }
 
-    loadQuill()
-
+    // Agregar un pequeÃ±o delay para asegurar que el DOM estÃ© listo
+    const timer = setTimeout(() => {
+      loadQuill()
+    }, 100)
+    
     return () => {
+      clearTimeout(timer)
       if (quillInstanceRef.current) {
         quillInstanceRef.current.off('text-change')
         // Destruir completamente la instancia

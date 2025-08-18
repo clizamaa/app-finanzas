@@ -64,7 +64,7 @@ export async function GET(request) {
       prisma.article.count({ where }),
       prisma.article.findMany({
         where,
-        include: { category: true, author: true }, // tags temporarily disabled
+        include: { Category: true, User: true }, // tags temporarily disabled
         orderBy,
         skip: (page - 1) * limit,
         take: limit
@@ -127,7 +127,13 @@ export async function POST(request) {
     if (!category) {
       const nameFromSlug = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       category = await prisma.category.create({
-        data: { id: randomUUID(), name: nameFromSlug, slug: categorySlug }
+        data: { 
+          id: randomUUID(), 
+          name: nameFromSlug, 
+          slug: categorySlug,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
       })
     }
 
@@ -153,13 +159,13 @@ export async function POST(request) {
       excerpt: data.excerpt || '',
       content: data.content,
       image: typeof data.image === 'string' && data.image.trim() !== '' ? data.image.trim() : undefined,
-      published: (data.status === 'published' || !!data.published) ? '1' : '0',
-      featured: !!data.featured ? '1' : '0',
-      views: '0',
-      createdAt: now,
-      updatedAt: now,
-      authorId: decoded.userId, // Usar el ID directamente
-      categoryId: category.id   // Usar el ID directamente
+      published: (data.status === 'published' || !!data.published),
+      featured: !!data.featured,
+      views: 0,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
+      authorId: decoded.userId,
+      categoryId: category.id
     }
 
     console.log('Creating article with data:', {
@@ -172,7 +178,7 @@ export async function POST(request) {
 
     const newArticle = await prisma.article.create({
       data: articleData,
-      include: { category: true, author: true }
+      include: { Category: true, User: true }
     })
 
     return NextResponse.json({

@@ -33,7 +33,7 @@ export async function GET(request) {
       orderBy,
       include: {
         _count: {
-          select: { articles: true }
+          select: { Article: true }
         }
       }
     })
@@ -44,7 +44,7 @@ export async function GET(request) {
       name: category.name,
       slug: category.slug,
       description: category.description || '',
-      articleCount: category._count.articles,
+      articleCount: category._count.Article,
       createdAt: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
       updatedAt: category.updatedAt instanceof Date ? category.updatedAt.toISOString() : category.updatedAt
     }))

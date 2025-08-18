@@ -68,7 +68,9 @@ const ArticlesManagement = () => {
     }
 
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(article => article.category.slug === selectedCategory)
+      filtered = filtered.filter(article => 
+        (article.Category?.slug || article.category?.slug) === selectedCategory
+      )
     }
 
     if (selectedStatus !== 'all') {
@@ -312,13 +314,13 @@ const ArticlesManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="text-sm font-medium text-gray-900">
-                          {article.author?.name || 'Sin autor'}
+                          {article.User?.name || article.author?.name || 'Sin autor'}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                        {article.category.name}
+                        {article.Category?.name || article.category?.name || 'Sin categoría'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

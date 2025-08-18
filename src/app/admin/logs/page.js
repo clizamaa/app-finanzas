@@ -19,7 +19,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
-import AdminProtectedRoute from '@/components/AdminProtectedRoute'
+
 
 const LogsPage = () => {
   const [logs, setLogs] = useState([])
@@ -229,7 +229,6 @@ const LogsPage = () => {
   }
 
   return (
-    <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -559,7 +558,6 @@ const LogsPage = () => {
           </div>
         </div>
       </div>
-    </AdminProtectedRoute>
   )
 }
 

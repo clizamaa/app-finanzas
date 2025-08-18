@@ -82,8 +82,6 @@ model User {
   accessLogs AccessLog[]
   createdAt String?
   updatedAt String?
-  
-  @@map("user")
 }
 
 model Role {

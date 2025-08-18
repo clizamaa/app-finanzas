@@ -131,8 +131,8 @@ const ArticlePage = () => {
             <span>/</span>
             <Link href="/articulos" className="hover:text-blue-600">Artículos</Link>
             <span>/</span>
-            <Link href={`/articulos/categoria/${article.category.slug}`} className="hover:text-blue-600">
-              {article.category.name}
+            <Link href={`/articulos/categoria/${article.Category?.slug || article.category?.slug}`} className="hover:text-blue-600">
+                  {article.Category?.name || article.category?.name}
             </Link>
             <span>/</span>
             <span className="text-gray-900">{article.title}</span>
@@ -154,7 +154,7 @@ const ArticlePage = () => {
         <header className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <div className="mb-4">
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {article.category.name}
+              {article.Category?.name || article.category?.name}
             </span>
           </div>
           
@@ -204,7 +204,7 @@ const ArticlePage = () => {
         ) : (
           <div className="mb-8">
             <div className="h-64 md:h-96 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-2xl">{article.category.name}</span>
+              <span className="text-white font-semibold text-2xl">{article.Category?.name || article.category?.name}</span>
             </div>
           </div>
         )}
@@ -247,7 +247,7 @@ const ArticlePage = () => {
       </article>
 
       {/* Related Articles */}
-      <RelatedArticles currentArticleId={article.id} category={article.category.slug} />
+      <RelatedArticles currentArticleId={article.id} category={article.Category?.slug || article.category?.slug} />
     </div>
   )
 }

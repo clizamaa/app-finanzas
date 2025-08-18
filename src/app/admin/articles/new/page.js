@@ -126,7 +126,7 @@ const NewArticle = () => {
             image: article.image || '',
             featured: article.featured || false,
             published: article.published || false,
-            tags: article.tags?.map(tag => tag.id) || []
+            tags: (article.Tag || article.tags)?.map(tag => tag.id) || []
           })
         } catch (error) {
           console.error('Error fetching article:', error)

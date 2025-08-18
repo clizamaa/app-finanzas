@@ -181,7 +181,7 @@ const AdminDashboard = () => {
       title: 'Nueva Categoría',
       description: 'Crear una nueva categoría',
       icon: FolderOpen,
-      href: '/admin/categories/new',
+      href: '/admin/categories/',
       color: 'bg-purple-500 hover:bg-purple-600'
     },
     {

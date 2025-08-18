@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
+import { randomUUID } from 'crypto'
 
 const prisma = new PrismaClient()
 const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
@@ -51,7 +52,7 @@ export async function GET(request) {
         role: true,
         _count: {
           select: {
-            articles: true
+            Article: true
           }
         }
       },
@@ -66,7 +67,7 @@ export async function GET(request) {
       email: user.email,
       name: user.name,
       role: user.role,
-      articlesCount: user._count.articles,
+      articlesCount: user._count.Article,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }))
@@ -144,10 +145,13 @@ export async function POST(request) {
     // Crear usuario
     const newUser = await prisma.user.create({
       data: {
+        id: randomUUID(),
         email,
         name,
         password: hashedPassword,
-        roleId
+        roleId,
+        createdAt: new Date(),
+        updatedAt: new Date()
       },
       include: {
         role: true

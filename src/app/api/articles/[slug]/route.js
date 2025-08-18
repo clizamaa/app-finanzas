@@ -27,8 +27,9 @@ export async function GET(request, { params }) {
     const article = await prisma.article.findUnique({
       where: { slug },
       include: { 
-        category: true, 
-        tags: true 
+        Category: true, 
+        Tag: true,
+        User: true 
       }
     })
 

@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     
     const article = await prisma.article.findUnique({
       where: { id },
-      include: { category: true, tags: true }
+      include: { Category: true, Tag: true, User: true }
     })
 
     if (!article) {
@@ -73,24 +73,23 @@ export async function PUT(request, { params }) {
     delete updateData.createdAt // No permitir cambiar fecha de creación
     
     if (data.categoryId) {
-      updateData.category = { connect: { id: data.categoryId } }
-      delete updateData.categoryId
+      updateData.categoryId = data.categoryId
     }
     
     if (data.status === 'published' || data.published) {
-      updateData.published = '1'
+      updateData.published = true
     } else if (data.status === 'draft' || data.published === false) {
-      updateData.published = '0'
+      updateData.published = false
     }
     
     if (data.featured !== undefined) {
-      updateData.featured = data.featured ? '1' : '0'
+      updateData.featured = !!data.featured
     }
 
     const updatedArticle = await prisma.article.update({
       where: { id },
       data: updateData,
-      include: { category: true, tags: true }
+      include: { Category: true, Tag: true, User: true }
     })
 
     return NextResponse.json({

@@ -60,7 +60,7 @@ export async function GET(request) {
       orderBy,
       include: {
         _count: {
-          select: { articles: true }
+          select: { Article: true }
         }
       }
     })
@@ -71,7 +71,7 @@ export async function GET(request) {
       name: category.name,
       slug: category.slug,
       description: category.description || '',
-      articleCount: category._count.articles,
+      articleCount: category._count.Article,
       createdAt: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
       updatedAt: category.updatedAt instanceof Date ? category.updatedAt.toISOString() : category.updatedAt
     }))
@@ -135,15 +135,20 @@ export async function POST(request) {
       )
     }
 
+    const { randomUUID } = require('crypto')
+    
     const newCategory = await prisma.category.create({
       data: {
+        id: randomUUID(),
         name: data.name.trim(),
         slug: data.slug.toLowerCase().trim(),
-        description: data.description?.trim() || ''
+        description: data.description?.trim() || '',
+        createdAt: new Date(),
+        updatedAt: new Date()
       },
       include: {
         _count: {
-          select: { articles: true }
+          select: { Article: true }
         }
       }
     })
@@ -153,7 +158,7 @@ export async function POST(request) {
       name: newCategory.name,
       slug: newCategory.slug,
       description: newCategory.description || '',
-      articleCount: newCategory._count.articles,
+      articleCount: newCategory._count.Article,
       createdAt: newCategory.createdAt instanceof Date ? newCategory.createdAt.toISOString() : newCategory.createdAt,
       updatedAt: newCategory.updatedAt instanceof Date ? newCategory.updatedAt.toISOString() : newCategory.updatedAt
     }

@@ -24,15 +24,14 @@ const ArticulosPage = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const response = await fetch('/api/admin/articles')
+        const response = await fetch('/api/articles')
         if (!response.ok) {
           throw new Error('Error al cargar los artículos')
         }
         const data = await response.json()
-        // Filtrar solo artículos publicados desde la forma correcta de respuesta
-        const list = Array.isArray(data) ? data : (data.articles || [])
-        const publishedArticles = list.filter(article => article.published === true)
-        setArticles(publishedArticles)
+        // Los artículos ya vienen filtrados como publicados desde la API
+        const articles = data.articles || []
+        setArticles(articles)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -72,11 +71,14 @@ const ArticulosPage = () => {
     { name: 'Todos', slug: 'todos', count: articles.length },
     ...Array.from(new Map(
       articles
-        .filter(a => a.category)
-        .map(a => [a.category.slug, { name: a.category.name, slug: a.category.slug }])
+        .filter(a => a.Category || a.category)
+        .map(a => {
+          const cat = a.Category || a.category
+          return [cat.slug, { name: cat.name, slug: cat.slug }]
+        })
     ).values()).map(cat => ({
       ...cat,
-      count: articles.filter(a => a.category?.slug === cat.slug).length
+      count: articles.filter(a => (a.Category?.slug || a.category?.slug) === cat.slug).length
     }))
   ]
 
@@ -94,7 +96,7 @@ const ArticulosPage = () => {
   // Filtrar artículos basándose en la categoría seleccionada
   const filteredArticles = selectedCategory === 'todos' 
     ? articles 
-    : articles.filter(article => article.category?.slug === selectedCategory)
+    : articles.filter(article => (article.Category?.slug || article.category?.slug) === selectedCategory)
 
   // Mostrar artículos filtrados, ordenados por fecha de creación (más recientes primero)
   const allArticles = filteredArticles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -181,8 +183,9 @@ const ArticulosPage = () => {
                     <li key={category.slug}>
                       <button
                         onClick={() => {
-                          // Limpiar parámetros URL para evitar conflictos
-                          router.replace('/articulos', { scroll: false })
+                          // Actualizar URL con la categoría seleccionada
+                          const newUrl = category.slug === 'todos' ? '/articulos' : `/articulos?category=${category.slug}`
+                          router.replace(newUrl, { scroll: false })
                           setIsAnimating(true)
                           setTimeout(() => {
                             setSelectedCategory(category.slug)
@@ -206,21 +209,7 @@ const ArticulosPage = () => {
                 </ul>
               </div>
 
-              {/* Popular Tags */}
-              <div>
-                <h3 className="text-lg font-semibold text-navy mb-3">Tags Populares</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Presupuesto', 'Apps', 'Inversiones', 'YNAB', 'Mint', 'Seguridad', 'Tutorial'].map((tag) => (
-                    <Link
-                      key={tag}
-                      href={`/articulos/tag/${tag.toLowerCase()}`}
-                      className="bg-emerald/10 text-emerald px-3 py-2 rounded-full text-sm font-medium hover:bg-emerald/20 transition-colors duration-200"
-                    >
-                      {tag}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+
             </div>
           </aside>
 
@@ -269,7 +258,7 @@ const ArticulosPage = () => {
                               />
                             ) : (
                               <div className="h-full bg-gradient-to-br from-emerald to-emerald/80 flex items-center justify-center">
-                                <span className="text-white font-semibold text-lg">{article.category?.name || 'Artículo'}</span>
+                                <span className="text-white font-semibold text-lg">{article.Category?.name || article.category?.name || 'Artículo'}</span>
                               </div>
                             )}
                           </div>
@@ -278,7 +267,7 @@ const ArticulosPage = () => {
                         <div className="md:w-2/3">
                           <div className="flex items-center text-sm text-gray-500 mb-3">
                             <span className="bg-emerald/10 text-emerald px-3 py-2 rounded-full text-xs font-semibold mr-3">
-                              {article.category?.name || 'Artículo'}
+                              {article.Category?.name || article.category?.name || 'Artículo'}
                             </span>
                             {article.featured && (
                               <span className="bg-orange/10 text-orange px-3 py-2 rounded-full text-xs font-semibold mr-3">

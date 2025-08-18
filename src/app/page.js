@@ -295,24 +295,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sección CTA */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-navy to-blue-800 rounded-2xl text-white p-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-4">Recibe contenido exclusivo</h2>
-              <p className="text-blue-100 mb-6">Suscríbete a nuestro boletín y recibe reviews, tutoriales y tips directamente en tu correo.</p>
-              <Link href="/sobre-nosotros" className="inline-flex items-center px-6 py-3 rounded-lg bg-emerald text-white font-semibold hover:bg-green-600 transition-colors duration-200">
-                Conoce más
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </div>
-            <div className="hidden md:block">
-              <img src="/images/newsletter.svg" alt="Newsletter" className="w-full h-auto" />
-            </div>
-          </div>
-        </div>
-      </section>
+
     </div>
   )
 }
