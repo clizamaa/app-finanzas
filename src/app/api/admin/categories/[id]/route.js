@@ -44,8 +44,8 @@ export async function GET(_request, { params }) {
       slug: category.slug,
       description: category.description || '',
       articleCount: category._count.articles,
-      createdAt: category.createdAt.toISOString(),
-      updatedAt: category.updatedAt.toISOString()
+      createdAt: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
+    updatedAt: category.updatedAt instanceof Date ? category.updatedAt.toISOString() : category.updatedAt
     }
 
     return NextResponse.json(formatted)
@@ -126,8 +126,8 @@ export async function PUT(request, { params }) {
       slug: updated.slug,
       description: updated.description || '',
       articleCount: updated._count.articles,
-      createdAt: updated.createdAt.toISOString(),
-      updatedAt: updated.updatedAt.toISOString()
+      createdAt: updated.createdAt instanceof Date ? updated.createdAt.toISOString() : updated.createdAt,
+    updatedAt: updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt
     }
 
     return NextResponse.json({ message: 'Categoría actualizada', category: formatted })

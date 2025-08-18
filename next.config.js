@@ -71,15 +71,7 @@ const nextConfig = {
   },
 
   // Configuración de redirects
-  async redirects() {
-    return [
-      {
-        source: '/admin',
-        destination: '/admin/dashboard',
-        permanent: true
-      }
-    ]
-  },
+
 
   // Optimizaciones de producción
   poweredByHeader: false,

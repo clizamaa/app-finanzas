@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
+import { randomUUID } from 'crypto'
 
 // Función para verificar el token JWT
 function verifyToken(request) {
@@ -41,8 +42,8 @@ export async function GET(request) {
           ]
         } : {},
         category ? { category: { slug: category } } : {},
-        status ? { published: status === 'published' } : {},
-        featured !== null && featured !== undefined ? { featured: featured === 'true' } : {}
+        status ? { published: status === 'published' ? true : false } : {},
+        featured !== null && featured !== undefined ? { featured: featured === 'true' ? true : false } : {}
       ]
     }
 
@@ -63,7 +64,7 @@ export async function GET(request) {
       prisma.article.count({ where }),
       prisma.article.findMany({
         where,
-        include: { category: true, tags: true, author: true },
+        include: { category: true, author: true }, // tags temporarily disabled
         orderBy,
         skip: (page - 1) * limit,
         take: limit
@@ -122,16 +123,16 @@ export async function POST(request) {
 
     // Buscar categoría por slug, o crearla si no existe
     const categorySlug = String(data.category).toLowerCase().trim()
-    let category = await prisma.category.findUnique({ where: { slug: categorySlug } })
+    let category = await prisma.category.findFirst({ where: { slug: categorySlug } })
     if (!category) {
       const nameFromSlug = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       category = await prisma.category.create({
-        data: { name: nameFromSlug, slug: categorySlug }
+        data: { id: randomUUID(), name: nameFromSlug, slug: categorySlug }
       })
     }
 
     // Verificar slug único
-    const existingArticle = await prisma.article.findUnique({ where: { slug } })
+    const existingArticle = await prisma.article.findFirst({ where: { slug } })
     if (existingArticle) {
       return NextResponse.json(
         { error: 'Ya existe un artículo con este slug' },
@@ -142,21 +143,36 @@ export async function POST(request) {
     // Nota sobre tags: por ahora ignoramos el array recibido desde el cliente, ya que no corresponde con IDs reales de la BD
     // En una mejora posterior, podemos soportar creación/búsqueda por slug/nombre
 
+    const articleId = randomUUID()
+    const now = new Date().toISOString()
+
+    const articleData = {
+      id: articleId,
+      title: data.title,
+      slug: slug,
+      excerpt: data.excerpt || '',
+      content: data.content,
+      image: typeof data.image === 'string' && data.image.trim() !== '' ? data.image.trim() : undefined,
+      published: (data.status === 'published' || !!data.published) ? '1' : '0',
+      featured: !!data.featured ? '1' : '0',
+      views: '0',
+      createdAt: now,
+      updatedAt: now,
+      authorId: decoded.userId, // Usar el ID directamente
+      categoryId: category.id   // Usar el ID directamente
+    }
+
+    console.log('Creating article with data:', {
+      id: articleData.id,
+      title: articleData.title,
+      slug: articleData.slug,
+      authorId: articleData.authorId,
+      categoryId: articleData.categoryId
+    })
+
     const newArticle = await prisma.article.create({
-      data: {
-        title: data.title,
-        slug,
-        excerpt: data.excerpt || '',
-        content: data.content,
-        image: typeof data.image === 'string' && data.image.trim() !== '' ? data.image.trim() : undefined,
-        published: data.status === 'published' || !!data.published,
-        featured: !!data.featured,
-        views: 0,
-        author: { connect: { id: decoded.userId } }, // Conectar con el usuario autenticado
-        category: { connect: { id: category.id } }
-        // Nota: omitimos 'tags' en el create para evitar errores; se podrá manejar luego con 'connect' o creación de tags reales
-      },
-      include: { category: true, tags: true, author: true }
+      data: articleData,
+      include: { category: true, author: true }
     })
 
     return NextResponse.json({

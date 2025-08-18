@@ -72,8 +72,8 @@ export async function GET(request) {
       slug: category.slug,
       description: category.description || '',
       articleCount: category._count.articles,
-      createdAt: category.createdAt.toISOString(),
-      updatedAt: category.updatedAt.toISOString()
+      createdAt: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
+      updatedAt: category.updatedAt instanceof Date ? category.updatedAt.toISOString() : category.updatedAt
     }))
 
     return NextResponse.json({
@@ -154,8 +154,8 @@ export async function POST(request) {
       slug: newCategory.slug,
       description: newCategory.description || '',
       articleCount: newCategory._count.articles,
-      createdAt: newCategory.createdAt.toISOString(),
-      updatedAt: newCategory.updatedAt.toISOString()
+      createdAt: newCategory.createdAt instanceof Date ? newCategory.createdAt.toISOString() : newCategory.createdAt,
+      updatedAt: newCategory.updatedAt instanceof Date ? newCategory.updatedAt.toISOString() : newCategory.updatedAt
     }
 
     return NextResponse.json({

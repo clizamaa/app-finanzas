@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { randomUUID } from 'crypto'
 
 // Función para obtener la IP real del cliente
 function getClientIP(request) {
@@ -42,6 +43,7 @@ export async function POST(request) {
     // Crear el log de acceso
     const accessLog = await prisma.accessLog.create({
       data: {
+        id: randomUUID(),
         ip,
         userAgent,
         method,

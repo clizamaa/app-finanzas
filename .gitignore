@@ -48,6 +48,11 @@ deploy-info.json
 
 # logs
 logs/
+
+# secrets y archivos de deploy sensibles
+secrets-generated.txt
+.env.production.template
+.env.production
 *.log
 
 # uploads (archivos subidos por usuarios)

@@ -3,7 +3,7 @@ const { parse } = require('url')
 const next = require('next')
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
+const hostname = '216.246.47.124'
 const port = process.env.PORT || 3000
 
 // Configuración para cPanel

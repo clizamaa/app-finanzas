@@ -58,7 +58,7 @@ export async function PUT(request, { params }) {
 
     // Verificar slug único si se está actualizando
     if (data.slug && data.slug !== currentArticle.slug) {
-      const existingArticle = await prisma.article.findUnique({ where: { slug: data.slug } })
+      const existingArticle = await prisma.article.findFirst({ where: { slug: data.slug } })
       if (existingArticle && existingArticle.id !== id) {
         return NextResponse.json(
           { error: 'Ya existe un artículo con este slug' },
@@ -78,9 +78,13 @@ export async function PUT(request, { params }) {
     }
     
     if (data.status === 'published' || data.published) {
-      updateData.published = true
+      updateData.published = '1'
     } else if (data.status === 'draft' || data.published === false) {
-      updateData.published = false
+      updateData.published = '0'
+    }
+    
+    if (data.featured !== undefined) {
+      updateData.featured = data.featured ? '1' : '0'
     }
 
     const updatedArticle = await prisma.article.update({

@@ -23,7 +23,7 @@ const getRecentActivity = async () => {
         type: 'article',
         action: article.published ? 'published' : 'created',
         title: article.title,
-        timestamp: article.createdAt.toISOString(),
+        timestamp: article.createdAt instanceof Date ? article.createdAt.toISOString() : article.createdAt,
         author: article.author?.name || 'Usuario'
       })
       
@@ -34,7 +34,7 @@ const getRecentActivity = async () => {
           type: 'article',
           action: 'featured',
           title: article.title,
-          timestamp: article.updatedAt.toISOString(),
+          timestamp: article.updatedAt instanceof Date ? article.updatedAt.toISOString() : article.updatedAt,
           author: article.author?.name || 'Usuario'
         })
       }
@@ -53,7 +53,7 @@ const getRecentActivity = async () => {
         type: 'category',
         action: 'created',
         title: category.name,
-        timestamp: category.createdAt.toISOString(),
+        timestamp: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
         author: 'Admin'
       })
     })
@@ -74,7 +74,7 @@ const getRecentActivity = async () => {
         type: 'user',
         action: 'created',
         title: `${user.name} (${user.role?.name || 'Sin rol'})`,
-        timestamp: user.createdAt.toISOString(),
+        timestamp: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
         author: 'Admin'
       })
     })

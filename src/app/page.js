@@ -13,12 +13,11 @@ export default function Home() {
   useEffect(() => {
     const fetchLatestArticle = async () => {
       try {
-        const response = await fetch('/api/admin/articles?limit=1&sortBy=createdAt&sortOrder=desc')
+        const response = await fetch('/api/articles?limit=1', { cache: 'no-store' })
         if (response.ok) {
           const data = await response.json()
-          const publishedArticles = data.articles.filter(article => article.published === true)
-          if (publishedArticles.length > 0) {
-            setLatestArticle(publishedArticles[0])
+          if (Array.isArray(data.articles) && data.articles.length > 0) {
+            setLatestArticle(data.articles[0])
           }
         }
       } catch (error) {
@@ -58,35 +57,40 @@ export default function Home() {
     {
       icon: TrendingUp,
       title: 'Tutoriales Prácticos',
-      description: 'Aprende a usar las herramientas financieras más populares paso a paso.',
-      color: 'bg-emerald-50 text-emerald-600'
+      description: 'Guías paso a paso para sacar el máximo provecho a tus herramientas financieras.',
+      color: 'bg-green-50 text-green-600'
     },
     {
       icon: Shield,
-      title: 'Información Confiable',
-      description: 'Contenido verificado por expertos en finanzas personales.',
-      color: 'bg-orange-50 text-orange-600'
+      title: 'Seguridad Primero',
+      description: 'Evaluamos la seguridad y privacidad para proteger tus datos personales.',
+      color: 'bg-purple-50 text-purple-600'
     },
     {
       icon: Users,
       title: 'Comunidad Activa',
-      description: 'Únete a miles de usuarios que ya mejoraron sus finanzas.',
-      color: 'bg-purple-50 text-purple-600'
+      description: 'Únete a una comunidad que comparte consejos y experiencias reales.',
+      color: 'bg-yellow-50 text-yellow-600'
     }
   ]
 
   const stats = [
-    { number: '50+', label: 'Apps Analizadas', icon: Shield },
-    { number: '100+', label: 'Artículos Publicados', icon: BookOpen },
-    { number: '10K+', label: 'Usuarios Activos', icon: Users },
-    { number: '4.8', label: 'Rating Promedio', icon: Star }
+    { label: 'Lectores Mensuales', value: '10k+' },
+    { label: 'Artículos Publicados', value: '150+' },
+    { label: 'Apps Analizadas', value: '50+' },
+    { label: 'Guías Prácticas', value: '30+' }
   ]
 
   const testimonials = [
     {
-      text: "Gracias a AppFinanzasHoy encontré la app perfecta para gestionar mi presupuesto. Los reviews son súper detallados.",
-      author: "María González",
+      text: "Las reviews son muy claras y me ayudaron a elegir la app perfecta para mi presupuesto.",
+      author: "María García",
       role: "Emprendedora"
+    },
+    {
+      text: "Gracias a sus tutoriales, ahora entiendo cómo gestionar mis finanzas con YNAB.",
+      author: "Juan Pérez",
+      role: "Estudiante"
     },
     {
       text: "Los tutoriales me ayudaron a entender cómo usar YNAB correctamente. Ahora tengo mis finanzas bajo control.",
@@ -131,88 +135,94 @@ export default function Home() {
               {/* Stats en Hero */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 hidden">
                 {stats.map((stat, index) => {
-                  const Icon = stat.icon
                   return (
-                    <div key={index} className="text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Icon className="h-5 w-5 text-emerald mr-2" />
-                        <span className="text-2xl font-bold">{stat.number}</span>
-                      </div>
-                      <p className="text-sm text-gray-300">{stat.label}</p>
+                    <div key={index} className="bg-white/10 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+                      <div className="text-sm text-gray-300">{stat.label}</div>
                     </div>
                   )
                 })}
               </div>
             </div>
 
-            <div className="hidden lg:block">
+            {/* Tarjeta del Último Artículo */}
+            <div className="block">
               <div className="relative">
                 {loading ? (
                   <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2 animate-pulse">
                     <div className="flex items-center mb-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                      <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-white" />
+                      </div>
                       <div className="ml-4">
-                        <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-16"></div>
+                        <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-24"></div>
                       </div>
                     </div>
-                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
-                    <div className="flex items-center space-x-4">
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+                    <div className="mt-6">
+                      <div className="h-3 bg-gray-200 rounded w-16 mb-2"></div>
                       <div className="h-3 bg-gray-200 rounded w-20"></div>
                     </div>
                   </div>
                 ) : latestArticle ? (
-                   <Link href={`/articulos/${latestArticle.slug}`} className="block group">
-                     <div className="relative bg-gradient-to-br from-white via-white to-blue-50 rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-500 cursor-pointer overflow-hidden border border-transparent hover:border-emerald/20">
-                       {/* Animated background gradient */}
-                       <div className="absolute inset-0 bg-gradient-to-r from-emerald/5 via-blue/5 to-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                       
-                       {/* Floating particles effect */}
-                       <div className="absolute top-4 right-4 w-2 h-2 bg-emerald/30 rounded-full animate-ping"></div>
-                       <div className="absolute top-8 right-8 w-1 h-1 bg-blue/40 rounded-full animate-pulse delay-300"></div>
-                       <div className="absolute bottom-6 left-6 w-1.5 h-1.5 bg-purple/30 rounded-full animate-bounce delay-500"></div>
-                       
-                       <div className="relative z-10">
-                         <div className="flex items-center mb-4">
-                           <div className="w-12 h-12 bg-gradient-to-r from-emerald to-green-600 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-emerald/25 group-hover:scale-110 transition-all duration-300">
-                             <BookOpen className="h-6 w-6 text-white group-hover:animate-pulse" />
-                           </div>
-                           <div className="ml-4">
-                             <h4 className="font-semibold text-navy group-hover:text-emerald transition-colors duration-300">Último Artículo</h4>
-                             <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors duration-300">{formatTimeAgo(latestArticle.createdAt)}</p>
-                           </div>
-                           <div className="ml-auto">
-                             <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-emerald group-hover:translate-x-1 transition-all duration-300" />
-                           </div>
-                         </div>
-                         <h3 className="text-lg font-bold text-navy mb-2 line-clamp-2 group-hover:text-emerald transition-colors duration-300">
-                           {latestArticle.title}
-                         </h3>
-                         <p className="text-gray-600 text-sm line-clamp-3 group-hover:text-gray-700 transition-colors duration-300">
-                           {latestArticle.excerpt}
-                         </p>
-                         <div className="flex items-center mt-4 text-sm text-gray-500 group-hover:text-gray-600 transition-colors duration-300">
-                           <Eye className="h-4 w-4 mr-1 group-hover:text-emerald transition-colors duration-300" />
-                           <span className="mr-4">{latestArticle.views?.toLocaleString() || '0'} vistas</span>
-                           <Clock className="h-4 w-4 mr-1 group-hover:text-emerald transition-colors duration-300" />
-                           <span>{Math.ceil((latestArticle.content?.length || 1000) / 200)} min lectura</span>
-                         </div>
-                         
-                         {/* Call to action badge */}
-                         <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-emerald/10 text-emerald text-xs font-medium group-hover:bg-emerald group-hover:text-white transition-all duration-300">
-                           <span>Leer ahora</span>
-                           <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-300" />
-                         </div>
-                       </div>
-                       
-                       {/* Shine effect */}
-                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000"></div>
-                       </div>
-                     </div>
-                   </Link>
+                  <Link href={`/articulos/${latestArticle.slug}`} className="block group">
+                    <div className="relative bg-gradient-to-br from-white via-white to-blue-50 rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-500 cursor-pointer overflow-hidden border border-transparent hover:border-emerald/20">
+                      {/* Animated background gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald/5 via-blue/5 to-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      
+                      {/* Floating particles effect */}
+                      <div className="absolute top-4 right-4 w-2 h-2 bg-emerald/30 rounded-full animate-ping"></div>
+                      <div className="absolute top-8 right-8 w-1 h-1 bg-blue/40 rounded-full animate-pulse delay-300"></div>
+                      <div className="absolute bottom-6 left-6 w-1.5 h-1.5 bg-purple/30 rounded-full animate-bounce delay-500"></div>
+                      
+                      <div className="relative z-10">
+                        <div className="flex items-center mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-emerald to-green-600 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-emerald/25 group-hover:scale-110 transition-all duration-300">
+                            <BookOpen className="h-6 w-6 text-white group-hover:animate-pulse" />
+                          </div>
+                          <div className="ml-4">
+                            <h4 className="font-semibold text-navy group-hover:text-emerald transition-colors duration-300">Último Artículo</h4>
+                            <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors duration-300">{formatTimeAgo(latestArticle.createdAt)}</p>
+                          </div>
+                          <div className="ml-auto">
+                            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-emerald group-hover:translate-x-1 transition-all duration-300" />
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-bold text-navy mb-2 line-clamp-2 group-hover:text-emerald transition-colors duration-300">
+                          {latestArticle.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm line-clamp-3 group-hover:text-gray-700 transition-colors duration-300">
+                          {latestArticle.excerpt}
+                        </p>
+                        <div className="mt-6 relative overflow-hidden rounded-xl">
+                          <div className="bg-gradient-to-r from-emerald/10 to-blue/10 rounded-xl p-4 border border-emerald/20">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">Leer ahora</p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  <Calendar className="h-4 w-4 mr-1" /> Publicado recientemente
+                                </p>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <div className="flex items-center text-gray-500">
+                                  <Clock className="h-4 w-4 mr-1" />
+                                  <span>5 min</span>
+                                </div>
+                                <div className="flex items-center text-gray-500">
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  <span>{latestArticle.views || '0'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {/* Shine effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
                 ) : (
                   <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2">
                     <div className="flex items-center mb-4">
@@ -239,64 +249,45 @@ export default function Home() {
       </section>
 
       {/* Features Section - Estilo Blogger */}
-      <section className="py-20 bg-light-gray">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-navy mb-4">
-              ¿Por qué elegir AppFinanzasHoy?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Somos tu recurso confiable para navegar el complejo mundo de las finanzas personales
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-navy">¿Por qué AppFinanzasHoy?</h2>
+            <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
+              Compartimos información práctica y honesta para ayudarte a tomar mejores decisiones financieras.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <div key={index} className="bg-white rounded-xl p-8 shadow-md hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-2">
-                  <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-6 ${feature.color}`}>
-                    <Icon className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-navy mb-3 text-center">{feature.title}</h3>
-                  <p className="text-gray-600 text-center leading-relaxed">{feature.description}</p>
-                </div>
-              )
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <div key={index} className={`p-6 rounded-xl shadow-sm border ${feature.color}`}>
+                <feature.icon className="h-8 w-8 mb-4" />
+                <h3 className="font-semibold text-lg text-navy">{feature.title}</h3>
+                <p className="text-gray-600 mt-2">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Articles */}
       <FeaturedArticles />
 
-      {/* Testimonials Section */}
-      <section className="py-20 bg-navy text-white">
+      {/* Testimonios */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Lo que dicen nuestros lectores
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Miles de personas han transformado sus finanzas gracias a nuestro contenido
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-navy">Lo que dicen nuestros lectores</h2>
+            <p className="text-gray-600 mt-2">Experiencias reales de personas que transformaron sus finanzas con nuestra ayuda.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
-                <Quote className="h-8 w-8 text-emerald mb-4" />
-                <p className="text-lg mb-6 leading-relaxed">"{testimonial.text}"</p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-emerald rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {testimonial.author.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="font-semibold">{testimonial.author}</h4>
-                    <p className="text-gray-300 text-sm">{testimonial.role}</p>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-sm p-6">
+                <Quote className="h-6 w-6 text-emerald mb-4" />
+                <p className="text-gray-700 italic mb-4">"{t.text}"</p>
+                <div>
+                  <p className="font-semibold text-navy">{t.author}</p>
+                  <p className="text-gray-500 text-sm">{t.role}</p>
                 </div>
               </div>
             ))}
@@ -304,7 +295,24 @@ export default function Home() {
         </div>
       </section>
 
-
+      {/* Sección CTA */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-navy to-blue-800 rounded-2xl text-white p-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-4">Recibe contenido exclusivo</h2>
+              <p className="text-blue-100 mb-6">Suscríbete a nuestro boletín y recibe reviews, tutoriales y tips directamente en tu correo.</p>
+              <Link href="/sobre-nosotros" className="inline-flex items-center px-6 py-3 rounded-lg bg-emerald text-white font-semibold hover:bg-green-600 transition-colors duration-200">
+                Conoce más
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
+            <div className="hidden md:block">
+              <img src="/images/newsletter.svg" alt="Newsletter" className="w-full h-auto" />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

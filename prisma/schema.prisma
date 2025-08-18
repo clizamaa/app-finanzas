@@ -11,97 +11,119 @@ datasource db {
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
+  id          String    @id
+  name        String?
+  slug        String?
   description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   String?
+  updatedAt   String?
   articles    Article[]
+  
+  @@map("category")
 }
 
 model Article {
-  id          String    @id @default(cuid())
-  title       String
-  slug        String    @unique
-  excerpt     String
-  content     String    @db.LongText
+  id          String    @id
+  title       String?
+  slug        String?
+  excerpt     String?
+  content     String?
   image       String?
-  status      String    @default("draft") // draft, published, archived
-  published   Boolean   @default(false)
-  featured    Boolean   @default(false)
-  views       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id])
-  authorId    String
-  author      User      @relation(fields: [authorId], references: [id])
+  status      String?
+  published   String?   // stored as "1" or "0" in database
+  featured    String?   // stored as "1" or "0" in database
+  views       String?
+  createdAt   String?
+  updatedAt   String?
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  authorId    String?
+  author      User?     @relation(fields: [authorId], references: [id])
   comments    Comment[]
-  tags        Tag[]
+  // tags        Tag[]     @relation("ArticleToTag") // Temporarily disabled
   accessLogs  AccessLog[]
+  
+  @@map("article")
 }
 
 model Tag {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  articles Article[]
+  id       String    @id
+  name     String?
+  slug     String?
+  // articles Article[] @relation("ArticleToTag") // Temporarily disabled
+  
+  @@map("tag")
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  content   String   @db.Text
-  approved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  articleId String
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  id        String   @id
+  name      String?
+  email     String?
+  content   String?
+  approved  String?  // stored as "1" or "0" in database
+  createdAt String?
+  articleId String?
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
   parentId  String?
   parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
   replies   Comment[] @relation("CommentReplies")
+  
+  @@map("comment")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  roleId    String
-  role      Role     @relation(fields: [roleId], references: [id])
+  id        String   @id
+  email     String?
+  name      String?
+  password  String?
+  roleId    String?
+  role      Role?    @relation(fields: [roleId], references: [id])
   articles  Article[]
   accessLogs AccessLog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt String?
+  updatedAt String?
+  
+  @@map("user")
 }
 
 model Role {
-  id          String @id @default(cuid())
-  name        String @unique
+  id          String @id
+  name        String?
   description String?
-  permissions Json
+  permissions String?  // JSON stored as string
   users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   String?
+  updatedAt   String?
+  
+  @@map("role")
 }
 
 model AccessLog {
-  id        String   @id @default(cuid())
-  ip        String
+  id        String   @id
+  ip        String?
   userAgent String?
-  method    String   @default("GET")
-  path      String
-  action    String   // visit_home, visit_articles, view_article, etc.
+  method    String?
+  path      String?
+  action    String?  // visit_home, visit_articles, view_article, etc.
   referrer  String?
   articleId String?  // Si es una visita a un artículo específico
   article   Article? @relation(fields: [articleId], references: [id])
   userId    String?  // Si el usuario está autenticado
   user      User?    @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  createdAt String?
   
   @@index([ip])
   @@index([path])
   @@index([action])
   @@index([createdAt])
+  @@map("accesslog")
 }
+
+// Explicit many-to-many relation table mapping - Temporarily disabled
+// model ArticleToTag {
+//   A String
+//   B String
+//   
+//   @@unique([A, B])
+//   @@map("_articletotag")
+// }

@@ -13,7 +13,7 @@ export async function GET(request) {
 
     // Construir filtro de búsqueda
     const where = {
-      published: true, // Solo artículos publicados para el público
+      published: '1', // Solo artículos publicados (guardados como "1")
     }
 
     // Filtrar por categoría
@@ -25,7 +25,7 @@ export async function GET(request) {
 
     // Filtrar por destacados
     if (featured === 'true') {
-      where.featured = true
+      where.featured = '1'
     }
 
     // Filtrar por búsqueda
@@ -42,8 +42,7 @@ export async function GET(request) {
       prisma.article.findMany({
         where,
         include: { 
-          category: true, 
-          tags: true 
+          category: true
         },
         orderBy: { createdAt: 'desc' },
         skip: offset,
