@@ -178,26 +178,39 @@ export async function GET(request) {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url)
-    const days = parseInt(searchParams.get('days')) || 30
+    const days = searchParams.get('days')
+    const deleteAll = searchParams.get('all') === 'true'
 
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - days)
+    let deletedCount
+    let message
 
-    const deletedCount = await prisma.accessLog.deleteMany({
-      where: {
-        createdAt: {
-          lt: cutoffDate
+    if (deleteAll) {
+      // Eliminar TODOS los logs
+      deletedCount = await prisma.accessLog.deleteMany({})
+      message = `Se eliminaron TODOS los logs del sistema (${deletedCount.count} registros)`
+    } else {
+      // Eliminar logs antiguos (comportamiento original)
+      const daysToDelete = parseInt(days) || 30
+      const cutoffDate = new Date()
+      cutoffDate.setDate(cutoffDate.getDate() - daysToDelete)
+
+      deletedCount = await prisma.accessLog.deleteMany({
+        where: {
+          createdAt: {
+            lt: cutoffDate
+          }
         }
-      }
-    })
+      })
+      message = `Se eliminaron ${deletedCount.count} logs anteriores a ${daysToDelete} días`
+    }
 
     return NextResponse.json({
-      message: `Se eliminaron ${deletedCount.count} logs anteriores a ${days} días`,
+      message,
       deletedCount: deletedCount.count
     })
 
   } catch (error) {
-    console.error('Error eliminando logs antiguos:', error)
+    console.error('Error eliminando logs:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

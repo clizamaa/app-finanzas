@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  ShieldOff
+  ShieldOff,
+  Trash2
 } from 'lucide-react'
 
 
@@ -250,9 +251,56 @@ const LogsPage = () => {
       }
     } catch (error) {
       console.error('Error blocking IP:', error)
-      alert('Error al bloquear la IP')
+      alert('Error al bloquear IP')
     } finally {
       setBlockingIP(null)
+    }
+  }
+
+  // Borrar todos los logs
+  const deleteAllLogs = async () => {
+    const confirmed = window.confirm(
+      '⚠️ ADVERTENCIA: Esta acción eliminará TODOS los logs del sistema de forma permanente.\n\n' +
+      'Esta información es crítica para la seguridad y auditoría del sitio.\n\n' +
+      '¿Estás completamente seguro de que deseas continuar?'
+    )
+    
+    if (!confirmed) return
+    
+    // Segunda confirmación para información tan delicada
+    const doubleConfirmed = window.confirm(
+      '🚨 CONFIRMACIÓN FINAL\n\n' +
+      'Vas a eliminar TODOS los registros de acceso del sistema.\n' +
+      'Esta acción NO se puede deshacer.\n\n' +
+      'Escribe "CONFIRMAR" en tu mente y haz clic en Aceptar para proceder.'
+    )
+    
+    if (!doubleConfirmed) return
+    
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch('/api/logs?all=true', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        setLogs([])
+        setFilteredLogs([])
+        alert('✅ Todos los logs han sido eliminados exitosamente')
+        fetchLogs() // Recargar para mostrar página vacía
+      } else {
+        const data = await response.json()
+        alert(`❌ Error: ${data.message || 'No se pudieron eliminar los logs'}`)
+      }
+    } catch (error) {
+      console.error('Error deleting all logs:', error)
+      alert('❌ Error al eliminar los logs')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -357,6 +405,15 @@ const LogsPage = () => {
                 <button className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
                   <Download className="h-4 w-4 mr-2" />
                   Exportar
+                </button>
+                
+                <button
+                  onClick={deleteAllLogs}
+                  className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                  title="Borrar todos los logs - Acción irreversible"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Borrar Todos
                 </button>
               </div>
             </div>
