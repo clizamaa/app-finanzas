@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     
     const article = await prisma.article.findUnique({
       where: { id },
-      include: { Category: true, Tag: true, User: true }
+      include: { category: true, author: true }
     })
 
     if (!article) {
@@ -18,10 +18,11 @@ export async function GET(request, { params }) {
     }
 
     // Incrementar vistas si está publicado
-    if (article.published) {
+    if (article.published === '1') {
+      const currentViews = parseInt(article.views) || 0
       await prisma.article.update({
         where: { id },
-        data: { views: { increment: 1 } }
+        data: { views: (currentViews + 1).toString() }
       })
     }
 
@@ -76,20 +77,20 @@ export async function PUT(request, { params }) {
       updateData.categoryId = data.categoryId
     }
     
-    if (data.status === 'published' || data.published) {
-      updateData.published = true
+    if (data.status === 'published' || data.published === true) {
+      updateData.published = '1'
     } else if (data.status === 'draft' || data.published === false) {
-      updateData.published = false
+      updateData.published = '0'
     }
     
     if (data.featured !== undefined) {
-      updateData.featured = !!data.featured
+      updateData.featured = data.featured ? '1' : '0'
     }
 
     const updatedArticle = await prisma.article.update({
       where: { id },
       data: updateData,
-      include: { Category: true, Tag: true, User: true }
+      include: { category: true, author: true }
     })
 
     return NextResponse.json({
@@ -123,15 +124,23 @@ export async function PATCH(request, { params }) {
     delete updateData.id
     delete updateData.createdAt
     
+    // Convertir booleanos a strings
+    if (data.published !== undefined) {
+      updateData.published = data.published ? '1' : '0'
+    }
+    
+    if (data.featured !== undefined) {
+      updateData.featured = data.featured ? '1' : '0'
+    }
+    
     if (data.categoryId) {
-      updateData.category = { connect: { id: data.categoryId } }
-      delete updateData.categoryId
+      updateData.categoryId = data.categoryId
     }
 
     const updatedArticle = await prisma.article.update({
       where: { id },
       data: updateData,
-      include: { category: true, tags: true }
+      include: { category: true, author: true }
     })
 
     return NextResponse.json({

@@ -95,6 +95,7 @@ const UsersManagement = () => {
       if (response.ok) {
         showSuccess('¡Éxito!', 'Usuario creado correctamente')
         setShowCreateModal(false)
+        setEditingUser(null)
         setFormData({ email: '', name: '', password: '', roleId: '' })
         fetchUsers() // Recargar lista
       } else {
@@ -240,7 +241,10 @@ const UsersManagement = () => {
             </div>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              setEditingUser(null)
+              setShowCreateModal(true)
+            }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
           >
             <Plus className="h-5 w-5 mr-2" />
@@ -265,11 +269,11 @@ const UsersManagement = () => {
           <div className="flex items-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-1" />
-              <span>{users.length} usuarios totales</span>
+              <span>{searchTerm ? `${filteredUsers.length} usuarios encontrados` : `${users.length} usuarios totales`}</span>
             </div>
             <div className="flex items-center">
               <Shield className="h-4 w-4 mr-1" />
-              <span>{users.filter(u => u.role.name === 'admin').length} administradores</span>
+              <span>{searchTerm ? `${filteredUsers.filter(u => u.role?.name === 'admin').length} administradores en resultados` : `${users.filter(u => u.role?.name === 'admin').length} administradores`}</span>
             </div>
           </div>
         </div>
@@ -378,7 +382,10 @@ const UsersManagement = () => {
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold text-gray-900">Crear Nuevo Usuario</h2>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false)
+                  setEditingUser(null)
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
@@ -586,7 +593,10 @@ const UsersManagement = () => {
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false)
+                    setEditingUser(null)
+                  }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   Cancelar

@@ -17,7 +17,9 @@ import {
   Download,
   RefreshCw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Shield,
+  ShieldOff
 } from 'lucide-react'
 
 
@@ -31,6 +33,8 @@ const LogsPage = () => {
   const [stats, setStats] = useState({})
   const [pagination, setPagination] = useState({})
   const [currentPage, setCurrentPage] = useState(1)
+  const [blockedIPs, setBlockedIPs] = useState(new Set())
+  const [blockingIP, setBlockingIP] = useState(null)
 
   // Datos de ejemplo para los logs
   const sampleLogs = [
@@ -157,6 +161,12 @@ const LogsPage = () => {
     }
   }
 
+  // Cargar datos iniciales
+  useEffect(() => {
+    fetchLogs(1)
+    fetchBlockedIPs()
+  }, [])
+
   // Refetch logs when filters change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -191,6 +201,89 @@ const LogsPage = () => {
         return <AlertCircle className="h-5 w-5 text-orange-500" />
       default:
         return <Info className="h-5 w-5 text-gray-500" />
+    }
+  }
+
+  // Cargar IPs bloqueadas
+  const fetchBlockedIPs = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch('/api/admin/blocked-ips', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const blockedIPSet = new Set(data.blockedIPs.map(item => item.ip))
+        setBlockedIPs(blockedIPSet)
+      }
+    } catch (error) {
+      console.error('Error fetching blocked IPs:', error)
+    }
+  }
+
+  // Bloquear IP
+  const blockIP = async (ip) => {
+    try {
+      setBlockingIP(ip)
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch('/api/admin/blocked-ips', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ip,
+          reason: 'Bloqueado desde panel de logs'
+        })
+      })
+      
+      if (response.ok) {
+        setBlockedIPs(prev => new Set([...prev, ip]))
+        alert('IP bloqueada exitosamente')
+      } else {
+        const data = await response.json()
+        alert(`Error: ${data.message}`)
+      }
+    } catch (error) {
+      console.error('Error blocking IP:', error)
+      alert('Error al bloquear la IP')
+    } finally {
+      setBlockingIP(null)
+    }
+  }
+
+  // Desbloquear IP
+  const unblockIP = async (ip) => {
+    try {
+      setBlockingIP(ip)
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`/api/admin/blocked-ips?ip=${encodeURIComponent(ip)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        setBlockedIPs(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(ip)
+          return newSet
+        })
+        alert('IP desbloqueada exitosamente')
+      } else {
+        const data = await response.json()
+        alert(`Error: ${data.message}`)
+      }
+    } catch (error) {
+      console.error('Error unblocking IP:', error)
+      alert('Error al desbloquear la IP')
+    } finally {
+      setBlockingIP(null)
     }
   }
 
@@ -442,7 +535,36 @@ const LogsPage = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {log.ip}
+                          <div className="flex items-center space-x-2">
+                            <span>{log.ip}</span>
+                            {blockedIPs.has(log.ip) ? (
+                              <button
+                                onClick={() => unblockIP(log.ip)}
+                                disabled={blockingIP === log.ip}
+                                className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full hover:bg-green-200 disabled:opacity-50"
+                                title="Desbloquear IP"
+                              >
+                                {blockingIP === log.ip ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <ShieldOff className="h-3 w-3" />
+                                )}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => blockIP(log.ip)}
+                                disabled={blockingIP === log.ip}
+                                className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full hover:bg-red-200 disabled:opacity-50"
+                                title="Bloquear IP"
+                              >
+                                {blockingIP === log.ip ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Shield className="h-3 w-3" />
+                                )}
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {log.article ? (

@@ -13,19 +13,18 @@ export async function GET(request) {
 
     // Construir filtro de búsqueda
     const where = {
-      published: true, // Solo artículos publicados
+      // En DB se almacenan como string "1"/"0"
+      published: '1',
     }
 
-    // Filtrar por categoría
+    // Filtrar por categoría (slug)
     if (category && category !== 'all') {
-      where.Category = {
-        slug: category
-      }
+      where.category = { slug: category }
     }
 
     // Filtrar por destacados
     if (featured === 'true') {
-      where.featured = true
+      where.featured = '1'
     }
 
     // Filtrar por búsqueda
@@ -41,21 +40,22 @@ export async function GET(request) {
       prisma.article.count({ where }),
       prisma.article.findMany({
         where,
-        include: { 
-          Category: true,
-          User: true
+        include: {
+          // Relaciones correctas según schema.prisma
+          category: true,
+          author: true,
         },
         orderBy: { createdAt: 'desc' },
         skip: offset,
-        take: limit
-      })
+        take: limit,
+      }),
     ])
 
     return NextResponse.json({
       articles,
       total,
       limit,
-      offset
+      offset,
     })
   } catch (error) {
     console.error('Error al obtener artículos:', error)

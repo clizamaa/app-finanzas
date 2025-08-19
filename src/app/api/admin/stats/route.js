@@ -21,14 +21,14 @@ const getRecentActivity = async () => {
       activities.push({
         id: `article-${article.id}`,
         type: 'article',
-        action: article.published ? 'published' : 'created',
+        action: article.published === '1' ? 'published' : 'created',
         title: article.title,
         timestamp: article.createdAt instanceof Date ? article.createdAt.toISOString() : article.createdAt,
         author: article.author?.name || 'Usuario'
       })
       
       // Si el artículo está destacado, agregar actividad adicional
-      if (article.featured) {
+      if (article.featured === '1') {
         activities.push({
           id: `featured-${article.id}`,
           type: 'article',
@@ -97,8 +97,8 @@ const getStats = async () => {
   
   // Contar artículos reales
   const totalArticles = await prisma.article.count()
-  const publishedArticles = await prisma.article.count({ where: { published: true } })
-  const draftArticles = await prisma.article.count({ where: { published: false } })
+  const publishedArticles = await prisma.article.count({ where: { published: '1' } })
+  const draftArticles = await prisma.article.count({ where: { published: '0' } })
   
   // Contar categorías reales
   const totalCategories = await prisma.category.count()
@@ -106,13 +106,14 @@ const getStats = async () => {
   // Contar usuarios reales
   const totalUsers = await prisma.user.count()
   
-  // Calcular vistas totales
-  const viewsResult = await prisma.article.aggregate({
-    _sum: {
-      views: true
-    }
+  // Calcular vistas totales (campo views es String, necesitamos sumar manualmente)
+  const articles = await prisma.article.findMany({
+    select: { views: true }
   })
-  const totalViews = viewsResult._sum.views || 0
+  const totalViews = articles.reduce((sum, article) => {
+    const views = parseInt(article.views) || 0
+    return sum + views
+  }, 0)
   
   return {
     overview: {

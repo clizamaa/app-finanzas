@@ -12,7 +12,7 @@ function verifyToken(request) {
 
   const token = authHeader.substring(7)
   try {
-    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura'
+    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
     const decoded = jwt.verify(token, secret)
     return decoded
   } catch (error) {
@@ -42,8 +42,8 @@ export async function GET(request) {
           ]
         } : {},
         category ? { category: { slug: category } } : {},
-        status ? { published: status === 'published' ? true : false } : {},
-        featured !== null && featured !== undefined ? { featured: featured === 'true' ? true : false } : {}
+        status ? { published: status === 'published' ? '1' : '0' } : {},
+        featured !== null && featured !== undefined ? { featured: featured === 'true' ? '1' : '0' } : {}
       ]
     }
 
@@ -64,15 +64,23 @@ export async function GET(request) {
       prisma.article.count({ where }),
       prisma.article.findMany({
         where,
-        include: { Category: true, User: true }, // tags temporarily disabled
+        include: { category: true, author: true }, // ajustar a nombres de relación reales
         orderBy,
         skip: (page - 1) * limit,
         take: limit
       })
     ])
 
+    // Normalizar campos a tipos esperados por el frontend
+    const normalized = articles.map(a => ({
+      ...a,
+      published: a.published === '1',
+      featured: a.featured === '1',
+      views: a.views ? Number(a.views) : 0
+    }))
+
     return NextResponse.json({
-      articles,
+      articles: normalized,
       pagination: {
         page,
         limit,
@@ -131,8 +139,8 @@ export async function POST(request) {
           id: randomUUID(), 
           name: nameFromSlug, 
           slug: categorySlug,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       })
     }
@@ -146,9 +154,6 @@ export async function POST(request) {
       )
     }
 
-    // Nota sobre tags: por ahora ignoramos el array recibido desde el cliente, ya que no corresponde con IDs reales de la BD
-    // En una mejora posterior, podemos soportar creación/búsqueda por slug/nombre
-
     const articleId = randomUUID()
     const now = new Date().toISOString()
 
@@ -159,11 +164,12 @@ export async function POST(request) {
       excerpt: data.excerpt || '',
       content: data.content,
       image: typeof data.image === 'string' && data.image.trim() !== '' ? data.image.trim() : undefined,
-      published: (data.status === 'published' || !!data.published),
-      featured: !!data.featured,
-      views: 0,
-      createdAt: new Date(now),
-      updatedAt: new Date(now),
+      // Convertir a valores string "1"/"0" según el esquema actual
+      published: (data.status === 'published' || !!data.published) ? '1' : '0',
+      featured: !!data.featured ? '1' : '0',
+      views: '0',
+      createdAt: now,
+      updatedAt: now,
       authorId: decoded.userId,
       categoryId: category.id
     }
@@ -178,12 +184,20 @@ export async function POST(request) {
 
     const newArticle = await prisma.article.create({
       data: articleData,
-      include: { Category: true, User: true }
+      include: { category: true, author: true }
     })
+
+    // Normalizar respuesta
+    const normalizedNew = {
+      ...newArticle,
+      published: newArticle.published === '1',
+      featured: newArticle.featured === '1',
+      views: newArticle.views ? Number(newArticle.views) : 0
+    }
 
     return NextResponse.json({
       message: 'Artículo creado exitosamente',
-      article: newArticle
+      article: normalizedNew
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating article:', error)

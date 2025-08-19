@@ -10,7 +10,7 @@ function verifyToken(request) {
   }
   const token = authHeader.substring(7)
   try {
-    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura'
+    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
     const decoded = jwt.verify(token, secret)
     return decoded
   } catch (error) {
@@ -24,12 +24,12 @@ export async function GET(request, { params }) {
     const { slug } = params
     const decoded = verifyToken(request)
     
-    const article = await prisma.article.findUnique({
+    const article = await prisma.article.findFirst({
       where: { slug },
       include: { 
-        Category: true, 
-        Tag: true,
-        User: true 
+        category: true, 
+        // tags: true,  // Uncomment when Tag relation is enabled
+        author: true 
       }
     })
 
@@ -41,7 +41,7 @@ export async function GET(request, { params }) {
     }
 
     // Si no está publicado, solo permitir acceso si está autenticado (admin)
-    if (!article.published && !decoded) {
+    if (article.published !== '1' && !decoded) {
       return NextResponse.json(
         { error: 'Artículo no encontrado' },
         { status: 404 }
@@ -49,10 +49,11 @@ export async function GET(request, { params }) {
     }
 
     // Incrementar vistas solo para artículos publicados
-    if (article.published) {
+    if (article.published === '1') {
+      const currentViews = parseInt(article.views) || 0
       await prisma.article.update({
         where: { id: article.id },
-        data: { views: { increment: 1 } }
+        data: { views: (currentViews + 1).toString() }
       })
     }
 

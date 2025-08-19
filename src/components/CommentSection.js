@@ -18,15 +18,17 @@ const CommentSection = ({ articleId }) => {
     const fetchComments = async () => {
       try {
         setLoading(true)
-        // En una implementación real, aquí se haría la llamada a la API
-        // const response = await fetch(`/api/comments/${articleId}`)
-        // const data = await response.json()
-        // setComments(data)
-        
-        // Por ahora, dejamos los comentarios vacíos hasta que se implemente la API
-        setComments([])
+        const response = await fetch(`/api/comments/${articleId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setComments(data.comments || [])
+        } else {
+          console.error('Error fetching comments:', response.status)
+          setComments([])
+        }
       } catch (error) {
         console.error('Error fetching comments:', error)
+        setComments([])
       } finally {
         setLoading(false)
       }
@@ -70,22 +72,36 @@ const CommentSection = ({ articleId }) => {
 
     setLoading(true)
     
-    // Simular envío a API
-    setTimeout(() => {
-      const comment = {
-        id: Date.now(),
-        author: userName.trim() || 'Usuario Anónimo',
-        content: newComment,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        replies: []
+    try {
+      const response = await fetch(`/api/comments/${articleId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: userName.trim() || 'Usuario Anónimo',
+          content: newComment.trim()
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Recargar comentarios para obtener la lista actualizada
+        const commentsResponse = await fetch(`/api/comments/${articleId}`)
+        if (commentsResponse.ok) {
+          const commentsData = await commentsResponse.json()
+          setComments(commentsData.comments || [])
+        }
+        setNewComment('')
+        setUserName('')
+      } else {
+        console.error('Error creating comment:', response.status)
       }
-      
-      setComments([comment, ...comments])
-      setNewComment('')
-      setUserName('')
+    } catch (error) {
+      console.error('Error creating comment:', error)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
   const handleSubmitReply = async (e, parentId) => {
@@ -94,33 +110,38 @@ const CommentSection = ({ articleId }) => {
 
     setLoading(true)
     
-    // Simular envío a API
-    setTimeout(() => {
-      const reply = {
-        id: Date.now(),
-        author: replyUserName.trim() || 'Usuario Anónimo',
-        content: replyText,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        parentId
-      }
-      
-      const updatedComments = comments.map(comment => {
-        if (comment.id === parentId) {
-          return {
-            ...comment,
-            replies: [...comment.replies, reply]
-          }
-        }
-        return comment
+    try {
+      const response = await fetch(`/api/comments/${articleId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: replyUserName.trim() || 'Usuario Anónimo',
+          content: replyText.trim(),
+          parentId
+        })
       })
-      
-      setComments(updatedComments)
-      setReplyText('')
-      setReplyUserName('')
-      setReplyTo(null)
+
+      if (response.ok) {
+        const data = await response.json()
+        // Recargar comentarios para obtener la lista actualizada
+        const commentsResponse = await fetch(`/api/comments/${articleId}`)
+        if (commentsResponse.ok) {
+          const commentsData = await commentsResponse.json()
+          setComments(commentsData.comments || [])
+        }
+        setReplyText('')
+        setReplyUserName('')
+        setReplyTo(null)
+      } else {
+        console.error('Error creating reply:', response.status)
+      }
+    } catch (error) {
+      console.error('Error creating reply:', error)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
   const handleLike = (commentId, isReply = false, parentId = null) => {
@@ -254,7 +275,7 @@ const CommentSection = ({ articleId }) => {
                 
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
-                    <h4 className="font-semibold text-gray-900">{comment.author}</h4>
+                    <h4 className="font-semibold text-gray-900">{comment.name}</h4>
                     <span className="text-sm text-gray-500">{formatDate(comment.createdAt)}</span>
                   </div>
                   
@@ -346,7 +367,7 @@ const CommentSection = ({ articleId }) => {
                       
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h5 className="font-medium text-gray-900">{reply.author}</h5>
+                          <h5 className="font-medium text-gray-900">{reply.name}</h5>
                           <span className="text-sm text-gray-500">{formatDate(reply.createdAt)}</span>
                         </div>
                         

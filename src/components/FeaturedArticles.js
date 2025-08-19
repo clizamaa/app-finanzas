@@ -12,18 +12,13 @@ const FeaturedArticles = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const response = await fetch('/api/admin/articles')
+        const response = await fetch('/api/articles?featured=true&limit=3')
         if (!response.ok) {
           throw new Error('Error al cargar los artículos')
         }
         const data = await response.json()
-        // Validar que data sea un array antes de filtrar
-        const articles = Array.isArray(data) ? data : (data.articles || [])
-        // Filtrar solo artículos publicados y destacados, tomar los primeros 3
-        const publishedArticles = articles.filter(article => 
-          article.published === true && article.featured === true
-        ).slice(0, 3)
-        setFeaturedArticles(publishedArticles)
+        // Los artículos ya vienen filtrados por published y featured desde el API
+        setFeaturedArticles(data.articles || [])
       } catch (error) {
         console.error('Error fetching articles:', error)
         setError(error.message)

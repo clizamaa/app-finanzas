@@ -80,8 +80,8 @@ model User {
   role      Role?    @relation(fields: [roleId], references: [id])
   articles  Article[]
   accessLogs AccessLog[]
-  createdAt String?
-  updatedAt String?
+  createdAt DateTime?
+  updatedAt DateTime?
 }
 
 model Role {
@@ -90,8 +90,8 @@ model Role {
   description String?
   permissions String?  // JSON stored as string
   users       User[]
-  createdAt   String?
-  updatedAt   String?
+  createdAt   DateTime?
+  updatedAt   DateTime?
   
   @@map("role")
 }
@@ -115,6 +115,19 @@ model AccessLog {
   @@index([action])
   @@index([createdAt])
   @@map("accesslog")
+}
+
+model BlockedIP {
+  id        String   @id
+  ip        String   @unique
+  reason    String?  // Razón del bloqueo
+  blockedBy String?  // ID del admin que bloqueó
+  blockedAt DateTime?  // Fecha de bloqueo
+  createdAt DateTime?
+  updatedAt DateTime?
+  
+  @@index([ip])
+  @@map("blockedip")
 }
 
 // Explicit many-to-many relation table mapping - Temporarily disabled

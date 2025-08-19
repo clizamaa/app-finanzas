@@ -11,7 +11,7 @@ function verifyToken(request) {
 
   const token = authHeader.substring(7)
   try {
-    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura'
+    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
     const decoded = jwt.verify(token, secret)
     return decoded
   } catch (error) {
@@ -28,6 +28,19 @@ export async function GET(request) {
       return NextResponse.json(
         { error: 'Token de autenticación inválido o faltante' },
         { status: 401 }
+      )
+    }
+
+    // Verificar que el usuario existe y es admin
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      include: { role: true }
+    })
+
+    if (!user || user.role.name !== 'admin') {
+      return NextResponse.json(
+        { error: 'Permisos insuficientes' },
+        { status: 403 }
       )
     }
 
@@ -60,7 +73,7 @@ export async function GET(request) {
       orderBy,
       include: {
         _count: {
-          select: { Article: true }
+          select: { articles: true }
         }
       }
     })
@@ -71,7 +84,7 @@ export async function GET(request) {
       name: category.name,
       slug: category.slug,
       description: category.description || '',
-      articleCount: category._count.Article,
+      articleCount: category._count.articles,
       createdAt: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
       updatedAt: category.updatedAt instanceof Date ? category.updatedAt.toISOString() : category.updatedAt
     }))
@@ -98,6 +111,19 @@ export async function POST(request) {
       return NextResponse.json(
         { error: 'Token de autenticación inválido o faltante' },
         { status: 401 }
+      )
+    }
+
+    // Verificar que el usuario existe y es admin
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      include: { role: true }
+    })
+
+    if (!user || user.role.name !== 'admin') {
+      return NextResponse.json(
+        { error: 'Permisos insuficientes' },
+        { status: 403 }
       )
     }
 

@@ -11,20 +11,16 @@ const RelatedArticles = ({ currentArticleId, category }) => {
   useEffect(() => {
     const fetchRelatedArticles = async () => {
       try {
-        const response = await fetch('/api/admin/articles')
+        const response = await fetch(`/api/articles?category=${category}&limit=10`)
         if (response.ok) {
           const data = await response.json()
           
-          // La respuesta tiene estructura: { articles: [...], pagination: {...} }
+          // Los artículos ya vienen filtrados por publicados desde el API
           const articles = data.articles || []
           
-          // Filtrar artículos relacionados: misma categoría, publicados, excluyendo el actual
+          // Filtrar excluyendo el artículo actual
           const filtered = articles
-            .filter(article => 
-              article.published === true &&
-              article.id !== currentArticleId &&
-              article.category?.slug === category
-            )
+            .filter(article => article.id !== currentArticleId)
             .slice(0, 3) // Máximo 3 artículos relacionados
           
           setRelatedArticles(filtered)
@@ -36,7 +32,9 @@ const RelatedArticles = ({ currentArticleId, category }) => {
       }
     }
 
-    fetchRelatedArticles()
+    if (category) {
+      fetchRelatedArticles()
+    }
   }, [currentArticleId, category])
 
   const formatDate = (dateString) => {

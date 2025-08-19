@@ -52,7 +52,7 @@ export async function GET(request) {
         role: true,
         _count: {
           select: {
-            Article: true
+            articles: true
           }
         }
       },
@@ -67,7 +67,7 @@ export async function GET(request) {
       email: user.email,
       name: user.name,
       role: user.role,
-      articlesCount: user._count.Article,
+      articlesCount: user._count.articles,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }))

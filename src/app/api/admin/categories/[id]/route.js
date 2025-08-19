@@ -11,7 +11,7 @@ function verifyToken(request) {
 
   const token = authHeader.substring(7)
   try {
-    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura'
+    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
     const decoded = jwt.verify(token, secret)
     return decoded
   } catch (error) {

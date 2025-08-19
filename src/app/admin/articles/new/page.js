@@ -65,28 +65,20 @@ const NewArticle = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories')
+        const token = localStorage.getItem('adminToken')
+        const response = await fetch('/api/admin/categories', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        })
         if (response.ok) {
           const data = await response.json()
           setCategories(data.categories || [])
         } else {
-          // Fallback to hardcoded categories if API fails
-          setCategories([
-            { id: '1', name: 'Reviews', slug: 'reviews' },
-            { id: '2', name: 'Tutoriales', slug: 'tutoriales' },
-            { id: '3', name: 'Análisis', slug: 'analisis' },
-            { id: '4', name: 'Noticias', slug: 'noticias' }
-          ])
+          console.error('Error fetching categories:', response.status)
+          setCategories([])
         }
       } catch (error) {
         console.error('Error fetching categories:', error)
-        // Fallback to hardcoded categories
-        setCategories([
-          { id: '1', name: 'Reviews', slug: 'reviews' },
-          { id: '2', name: 'Tutoriales', slug: 'tutoriales' },
-          { id: '3', name: 'Análisis', slug: 'analisis' },
-          { id: '4', name: 'Noticias', slug: 'noticias' }
-        ])
+        setCategories([])
       }
     }
 
@@ -124,8 +116,8 @@ const NewArticle = () => {
             content: article.content || '',
             categoryId: article.categoryId || '',
             image: article.image || '',
-            featured: article.featured || false,
-            published: article.published || false,
+            featured: article.featured === '1',
+            published: article.published === '1',
             tags: (article.Tag || article.tags)?.map(tag => tag.id) || []
           })
         } catch (error) {
