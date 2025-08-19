@@ -110,14 +110,14 @@ export async function GET(request) {
       prisma.accessLog.findMany({
         where,
         include: {
-          Article: {
+          article: {
             select: {
               id: true,
               title: true,
               slug: true
             }
           },
-          User: {
+          user: {
             select: {
               id: true,
               name: true,

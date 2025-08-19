@@ -18,7 +18,8 @@ import {
   MessageSquare,
   X,
   EyeOff,
-  Globe
+  Globe,
+  Shield
 } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/auth'
 import { showSuccess, showError } from '@/lib/sweetAlert'
@@ -190,6 +191,13 @@ const AdminDashboard = () => {
       icon: Globe,
       href: '/admin/logs',
       color: 'bg-gray-500 hover:bg-gray-600'
+    },
+    {
+      title: 'IPs Bloqueadas',
+      description: 'Gestionar IPs bloqueadas',
+      icon: Shield,
+      href: '/admin/blocked-ips',
+      color: 'bg-red-500 hover:bg-red-600'
     }
   ]
 
@@ -332,6 +340,14 @@ const AdminDashboard = () => {
                 
                 // Manejar la tarjeta de "LOGS" de forma especial
                 if (action.title === 'LOGS') {
+                  // Solo mostrar si es admin
+                  if (!isAdmin()) {
+                    return null
+                  }
+                }
+                
+                // Manejar la tarjeta de "IPs Bloqueadas" de forma especial
+                if (action.title === 'IPs Bloqueadas') {
                   // Solo mostrar si es admin
                   if (!isAdmin()) {
                     return null
