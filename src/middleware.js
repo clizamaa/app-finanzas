@@ -1,30 +1,22 @@
 import { NextResponse } from 'next/server'
+import { checkBlockedIP } from './lib/blockedIP'
 
 export async function middleware(request) {
   try {
     // Obtener la IP del cliente
     const forwarded = request.headers.get('x-forwarded-for')
-    const ip = forwarded ? forwarded.split(',')[0] : request.ip || 'unknown'
-    
-    // Verificar si la IP está bloqueada usando una API interna
-    const checkUrl = new URL('/api/admin/blocked-ips/check', request.url)
-    checkUrl.searchParams.set('ip', ip)
-    
-    const response = await fetch(checkUrl, {
-      method: 'GET',
-      headers: {
-        'x-middleware-check': 'true'
-      }
-    })
-    
-    if (response.status === 403) {
-      const data = await response.json()
+    const ip = forwarded ? forwarded.split(',')[0].trim() : request.ip || 'unknown'
+
+    // Verificar si la IP está bloqueada directamente (sin fetch)
+    const result = await checkBlockedIP(ip)
+
+    if (result.blocked) {
       // IP bloqueada - devolver error 403
       return new NextResponse(
         JSON.stringify({
           error: 'Acceso denegado',
           message: 'Su dirección IP ha sido bloqueada',
-          reason: data.reason || 'Violación de términos de servicio'
+          reason: result.reason || 'Violación de términos de servicio'
         }),
         {
           status: 403,
@@ -34,10 +26,10 @@ export async function middleware(request) {
         }
       )
     }
-    
+
     // IP no bloqueada - continuar con la solicitud
     return NextResponse.next()
-    
+
   } catch (error) {
     console.error('Error en middleware de IP bloqueada:', error)
     // En caso de error, permitir el acceso para no romper el sitio

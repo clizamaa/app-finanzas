@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../generated/prisma-client'
 
 const prisma = new PrismaClient()
 
@@ -54,7 +54,7 @@ export default async function sitemap() {
   try {
     // Dynamic pages - Articles
     const articles = await prisma.article.findMany({
-      where: { published: true },
+      where: { published: '1' },
       select: {
         slug: true,
         updatedAt: true,

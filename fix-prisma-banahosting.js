@@ -133,7 +133,7 @@ async function main() {
     console.log('\n🔍 Verificando instalación...');
     
     try {
-        require('@prisma/client');
+        require('../src/generated/prisma-client');
         console.log('✅ Cliente Prisma instalado correctamente');
     } catch (error) {
         console.error('❌ Error al verificar cliente Prisma:', error.message);

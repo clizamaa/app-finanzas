@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../../../../generated/prisma-client'
 import { randomUUID } from 'crypto'
 
 const prisma = new PrismaClient()
