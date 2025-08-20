@@ -12,6 +12,10 @@ const prisma = new PrismaClient()
 
 // Helpers
 function getClientIp(req) {
+  // Priorizar cabecera inyectada por middleware
+  const cip = req.headers['x-client-ip']
+  if (typeof cip === 'string' && cip.length > 0) return cip
+
   const xff = req.headers['x-forwarded-for']
   if (typeof xff === 'string' && xff.length > 0) {
     return xff.split(',')[0].trim()
