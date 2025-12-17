@@ -1,19 +1,46 @@
 const mysql = require('mysql2/promise')
 const bcrypt = require('bcrypt')
+require('dotenv').config()
 
 async function createAdmin() {
+  const dbUrl = process.env.DATABASE_URL
+  if (!dbUrl) {
+    console.error('❌ DATABASE_URL no encontrada en .env')
+    return
+  }
+  
+  const urlParts = new URL(dbUrl)
+  
+  console.log(`🔌 Conectando a ${urlParts.hostname}...`)
+
   const connection = await mysql.createConnection({
-    host: '216.246.47.124',
-    port: 3306,
-    user: 'dmvadcrp_admin',
-    password: 'xv=BUI0_tqX9',
-    database: 'dmvadcrp_app-finanzas'
+    host: urlParts.hostname,
+    port: parseInt(urlParts.port) || 3306,
+    user: urlParts.username,
+    password: urlParts.password,
+    database: urlParts.pathname.substring(1)
   })
 
   try {
+    // Verificar tablas
+    const [tables] = await connection.execute('SHOW TABLES')
+    const tableList = tables.map(t => Object.values(t)[0])
+    console.log('📋 Tablas encontradas:', tableList.join(', '))
+    
+    const tableNames = tableList.map(t => t.toLowerCase())
+    if (!tableNames.includes('role')) {
+      console.error('❌ La tabla Role no existe. Ejecuta las migraciones primero.')
+      return
+    }
+
+    const roleTable = tableList.find(t => t.toLowerCase() === 'role')
+    const userTable = tableList.find(t => t.toLowerCase() === 'user') || 'User' // Default to User if not found (though check above implies it should be found if role is found usually)
+
+    console.log(`Using table names: ${roleTable}, ${userTable}`)
+
     // Verificar si ya existe el rol admin
     const [roleRows] = await connection.execute(
-      'SELECT * FROM Role WHERE name = ?',
+      `SELECT * FROM ${roleTable} WHERE name = ?`,
       ['admin']
     )
 
@@ -21,7 +48,7 @@ async function createAdmin() {
     if (roleRows.length === 0) {
       // Crear rol admin
       await connection.execute(
-        'INSERT INTO Role (id, name, description, permissions, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+        `INSERT INTO ${roleTable} (id, name, description, permissions, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())`,
         [
           roleId,
           'admin',
@@ -41,7 +68,7 @@ async function createAdmin() {
 
     // Verificar si ya existe el usuario admin
     const [userRows] = await connection.execute(
-      'SELECT * FROM User WHERE email = ?',
+      `SELECT * FROM ${userTable} WHERE email = ?`,
       ['admin@appfinanzashoy.com']
     )
 
@@ -50,7 +77,7 @@ async function createAdmin() {
       const hashedPassword = await bcrypt.hash('admin123', 10)
       
       await connection.execute(
-        'INSERT INTO User (id, email, name, password, roleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+        `INSERT INTO ${userTable} (id, email, name, password, roleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           'admin_user_id',
           'admin@appfinanzashoy.com',
