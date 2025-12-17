@@ -8,7 +8,6 @@
     "start": "next start -p $PORT",
     "server": "node server.js",
     "lint": "next lint",
-    "postinstall": "npx prisma generate",
     "deploy:build": "npm install --production && npm run build",
     "deploy:migrate": "npx prisma db push"
   },

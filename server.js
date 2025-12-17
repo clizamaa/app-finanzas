@@ -1,10 +1,41 @@
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
+const { PrismaClient } = require('./src/generated/prisma-client')
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '216.246.47.124'
 const port = process.env.PORT || 3000
+
+// Prisma en entorno Node (server)
+const prisma = new PrismaClient()
+
+// Helpers
+function getClientIp(req) {
+  // Priorizar cabecera inyectada por middleware
+  const cip = req.headers['x-client-ip']
+  if (typeof cip === 'string' && cip.length > 0) return cip
+
+  const xff = req.headers['x-forwarded-for']
+  if (typeof xff === 'string' && xff.length > 0) {
+    return xff.split(',')[0].trim()
+  }
+  if (Array.isArray(xff) && xff.length > 0) {
+    return String(xff[0]).split(',')[0].trim()
+  }
+  return (req.socket && req.socket.remoteAddress) || 'unknown'
+}
+
+function isPathExcluded(pathname) {
+  // Excluir rutas administrativas de gestión de bloqueos y assets
+  const exclusions = [
+    /^\/api\/admin\/blocked-ips(\/check)?$/,
+    /^\/_next\/static\//,
+    /^\/_next\/image/,
+    /^\/favicon\.ico$/
+  ]
+  return exclusions.some((re) => re.test(pathname))
+}
 
 // Configuración para cPanel
 const app = next({ 
@@ -35,6 +66,36 @@ app.prepare().then(() => {
       }
 
       const parsedUrl = parse(req.url, true)
+
+      // Verificación de IP bloqueada antes de entregar a Next.js
+      try {
+        const pathname = parsedUrl.pathname || '/'
+        if (!isPathExcluded(pathname)) {
+          const ip = getClientIp(req)
+          if (ip && ip !== 'unknown') {
+            const blockedIP = await prisma.blockedIP.findUnique({
+              where: { ip },
+              select: { ip: true, reason: true, blockedAt: true, blockedBy: true }
+            })
+            if (blockedIP) {
+              res.statusCode = 403
+              res.setHeader('Content-Type', 'application/json')
+              res.end(
+                JSON.stringify({
+                  error: 'Acceso denegado',
+                  message: 'Su dirección IP ha sido bloqueada',
+                  reason: blockedIP.reason || 'Violación de términos de servicio'
+                })
+              )
+              return
+            }
+          }
+        }
+      } catch (blockErr) {
+        // En caso de error en el chequeo, continuamos para no romper el sitio
+        if (dev) console.error('Error en verificación de IP bloqueada:', blockErr)
+      }
+
       await handle(req, res, parsedUrl)
     } catch (err) {
       console.error('Error occurred handling', req.url, err)
@@ -54,12 +115,14 @@ app.prepare().then(() => {
 })
 
 // Manejo de señales para cierre limpio
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully')
+  try { await prisma.$disconnect() } catch {}
   process.exit(0)
 })
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully')
+  try { await prisma.$disconnect() } catch {}
   process.exit(0)
 })
