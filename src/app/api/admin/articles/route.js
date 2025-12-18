@@ -42,8 +42,8 @@ export async function GET(request) {
           ]
         } : {},
         category ? { category: { slug: category } } : {},
-        status ? { published: status === 'published' ? '1' : '0' } : {},
-        featured !== null && featured !== undefined ? { featured: featured === 'true' ? '1' : '0' } : {}
+        status ? { published: status === 'published' } : {},
+        featured !== null && featured !== undefined ? { featured: featured === 'true' } : {}
       ]
     }
 
@@ -74,9 +74,9 @@ export async function GET(request) {
     // Normalizar campos a tipos esperados por el frontend
     const normalized = articles.map(a => ({
       ...a,
-      published: a.published === '1',
-      featured: a.featured === '1',
-      views: a.views ? Number(a.views) : 0
+      published: !!a.published,
+      featured: !!a.featured,
+      views: typeof a.views === 'number' ? a.views : (a.views ? Number(a.views) : 0)
     }))
 
     return NextResponse.json({
@@ -111,12 +111,24 @@ export async function POST(request) {
       )
     }
 
+    // Verificar que el usuario existe
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      include: { role: true }
+    })
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Usuario no encontrado' },
+        { status: 401 }
+      )
+    }
+
     const data = await request.json()
 
-    // Validación básica
-    if (!data.title || !data.content || !data.category || !data.image) {
+    // Validación básica (imagen opcional)
+    if (!data.title || !data.content || !data.category) {
       return NextResponse.json(
-        { error: 'Título, contenido, categoría e imagen son requeridos' },
+        { error: 'Título, contenido y categoría son requeridos' },
         { status: 400 }
       )
     }
@@ -139,8 +151,8 @@ export async function POST(request) {
           id: randomUUID(), 
           name: nameFromSlug, 
           slug: categorySlug,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       })
     }
@@ -155,7 +167,7 @@ export async function POST(request) {
     }
 
     const articleId = randomUUID()
-    const now = new Date().toISOString()
+    const now = new Date()
 
     const articleData = {
       id: articleId,
@@ -164,13 +176,13 @@ export async function POST(request) {
       excerpt: data.excerpt || '',
       content: data.content,
       image: typeof data.image === 'string' && data.image.trim() !== '' ? data.image.trim() : undefined,
-      // Convertir a valores string "1"/"0" según el esquema actual
-      published: (data.status === 'published' || !!data.published) ? '1' : '0',
-      featured: !!data.featured ? '1' : '0',
-      views: '0',
+      // Tipos reales según DB
+      published: (data.status === 'published' || !!data.published),
+      featured: !!data.featured,
+      views: 0,
       createdAt: now,
       updatedAt: now,
-      authorId: decoded.userId,
+      authorId: user.id,
       categoryId: category.id
     }
 
@@ -190,9 +202,9 @@ export async function POST(request) {
     // Normalizar respuesta
     const normalizedNew = {
       ...newArticle,
-      published: newArticle.published === '1',
-      featured: newArticle.featured === '1',
-      views: newArticle.views ? Number(newArticle.views) : 0
+      published: !!newArticle.published,
+      featured: !!newArticle.featured,
+      views: typeof newArticle.views === 'number' ? newArticle.views : (newArticle.views ? Number(newArticle.views) : 0)
     }
 
     return NextResponse.json({
@@ -202,7 +214,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating article:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor', detail: error?.message },
       { status: 500 }
     )
   }

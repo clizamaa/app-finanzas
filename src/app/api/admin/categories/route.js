@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
+import { randomUUID } from 'crypto'
+
+function formatDateTime(date) {
+  const pad = (n) => String(n).padStart(2, '0')
+  const y = date.getFullYear()
+  const m = pad(date.getMonth() + 1)
+  const d = pad(date.getDate())
+  const hh = pad(date.getHours())
+  const mm = pad(date.getMinutes())
+  const ss = pad(date.getSeconds())
+  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`
+}
 
 // Función para verificar el token JWT
 function verifyToken(request) {
@@ -151,7 +163,7 @@ export async function POST(request) {
     }
 
     // Verificar que el slug sea único
-    const existingBySlug = await prisma.category.findUnique({
+    const existingBySlug = await prisma.category.findFirst({
       where: { slug: data.slug.toLowerCase().trim() }
     })
     if (existingBySlug) {
@@ -161,8 +173,6 @@ export async function POST(request) {
       )
     }
 
-    const { randomUUID } = require('crypto')
-    
     const newCategory = await prisma.category.create({
       data: {
         id: randomUUID(),
@@ -174,7 +184,7 @@ export async function POST(request) {
       },
       include: {
         _count: {
-          select: { Article: true }
+          select: { articles: true }
         }
       }
     })
@@ -184,7 +194,7 @@ export async function POST(request) {
       name: newCategory.name,
       slug: newCategory.slug,
       description: newCategory.description || '',
-      articleCount: newCategory._count.Article,
+      articleCount: newCategory._count.articles,
       createdAt: newCategory.createdAt instanceof Date ? newCategory.createdAt.toISOString() : newCategory.createdAt,
       updatedAt: newCategory.updatedAt instanceof Date ? newCategory.updatedAt.toISOString() : newCategory.updatedAt
     }

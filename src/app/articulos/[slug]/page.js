@@ -211,7 +211,34 @@ const ArticlePage = () => {
 
         {/* Article Content */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div
+            className="prose prose-lg max-w-none whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: (() => {
+              try {
+                let html = article.content || ''
+                const decode = (s) => {
+                  const ta = document.createElement('textarea')
+                  ta.innerHTML = s
+                  return ta.value || s
+                }
+                for (let i = 0; i < 3; i++) {
+                  if (/[&]((lt|gt|amp|quot|#\d+));/i.test(html)) {
+                    html = decode(html)
+                  } else {
+                    break
+                  }
+                }
+                const parser = new DOMParser()
+                const doc = parser.parseFromString(html, 'text/html')
+                doc.querySelectorAll('.ql-ui').forEach(el => el.remove())
+                doc.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'))
+                doc.querySelectorAll('[data-list]').forEach(el => el.removeAttribute('data-list'))
+                return doc.body.innerHTML
+              } catch {
+                return article.content || ''
+              }
+            })() }}
+          />
         </div>
 
         {/* Article Footer */}

@@ -41,7 +41,7 @@ export async function GET(request, { params }) {
     }
 
     // Si no está publicado, solo permitir acceso si está autenticado (admin)
-    if (article.published !== '1' && !decoded) {
+    if (!article.published && !decoded) {
       return NextResponse.json(
         { error: 'Artículo no encontrado' },
         { status: 404 }
@@ -49,11 +49,11 @@ export async function GET(request, { params }) {
     }
 
     // Incrementar vistas solo para artículos publicados
-    if (article.published === '1') {
-      const currentViews = parseInt(article.views) || 0
+    if (!!article.published) {
+      const currentViews = typeof article.views === 'number' ? article.views : (parseInt(article.views) || 0)
       await prisma.article.update({
         where: { id: article.id },
-        data: { views: (currentViews + 1).toString() }
+        data: { views: currentViews + 1 }
       })
     }
 

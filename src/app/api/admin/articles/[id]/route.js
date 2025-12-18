@@ -18,11 +18,11 @@ export async function GET(request, { params }) {
     }
 
     // Incrementar vistas si está publicado
-    if (article.published === '1') {
-      const currentViews = parseInt(article.views) || 0
+    if (!!article.published) {
+      const currentViews = typeof article.views === 'number' ? article.views : (parseInt(article.views) || 0)
       await prisma.article.update({
         where: { id },
-        data: { views: (currentViews + 1).toString() }
+        data: { views: currentViews + 1 }
       })
     }
 
@@ -78,13 +78,13 @@ export async function PUT(request, { params }) {
     }
     
     if (data.status === 'published' || data.published === true) {
-      updateData.published = '1'
+      updateData.published = true
     } else if (data.status === 'draft' || data.published === false) {
-      updateData.published = '0'
+      updateData.published = false
     }
     
     if (data.featured !== undefined) {
-      updateData.featured = data.featured ? '1' : '0'
+      updateData.featured = !!data.featured
     }
 
     const updatedArticle = await prisma.article.update({
@@ -124,17 +124,37 @@ export async function PATCH(request, { params }) {
     delete updateData.id
     delete updateData.createdAt
     
-    // Convertir booleanos a strings
+    // Convertir flags a booleanos
     if (data.published !== undefined) {
-      updateData.published = data.published ? '1' : '0'
+      updateData.published = !!data.published
     }
     
     if (data.featured !== undefined) {
-      updateData.featured = data.featured ? '1' : '0'
+      updateData.featured = !!data.featured
     }
     
     if (data.categoryId) {
       updateData.categoryId = data.categoryId
+    }
+    
+    // Validar y normalizar slug si viene
+    if (typeof data.slug === 'string' && data.slug.trim() !== '') {
+      const newSlug = data.slug
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+      if (newSlug !== currentArticle.slug) {
+        const existingArticle = await prisma.article.findFirst({ where: { slug: newSlug } })
+        if (existingArticle && existingArticle.id !== id) {
+          return NextResponse.json(
+            { error: 'Ya existe un artículo con este slug' },
+            { status: 400 }
+          )
+        }
+      }
+      updateData.slug = newSlug
     }
 
     const updatedArticle = await prisma.article.update({
@@ -150,7 +170,7 @@ export async function PATCH(request, { params }) {
   } catch (error) {
     console.error('Error patching article:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor', detail: error?.message },
       { status: 500 }
     )
   }

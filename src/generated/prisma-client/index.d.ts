@@ -103,13 +103,6 @@ export class PrismaClient<
    */
   $disconnect(): $Utils.JsPromise<void>;
 
-  /**
-   * Add a middleware
-   * @deprecated since 4.16.0. For new code, prefer client extensions instead.
-   * @see https://pris.ly/d/extensions
-   */
-  $use(cb: Prisma.Middleware): void
-
 /**
    * Executes a prepared raw query and returns the number of affected rows.
    * @example
@@ -316,8 +309,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.13.0
-   * Query Engine version: 361e86d0ea4987e9f53a565309b3eed797a6bcbd
+   * Prisma Client JS version: 6.14.0
+   * Query Engine version: 717184b7b35ea05dfa71a3236b7af656013e1e49
    */
   export type PrismaVersion = {
     client: string
@@ -1414,25 +1407,6 @@ export namespace Prisma {
     | 'findRaw'
     | 'groupBy'
 
-  /**
-   * These options are being passed into the middleware as "params"
-   */
-  export type MiddlewareParams = {
-    model?: ModelName
-    action: PrismaAction
-    args: any
-    dataPath: string[]
-    runInTransaction: boolean
-  }
-
-  /**
-   * The `T` type makes sure, that the `return proceed` is not forgotten in the middleware implementation
-   */
-  export type Middleware<T = any> = (
-    params: MiddlewareParams,
-    next: (params: MiddlewareParams) => $Utils.JsPromise<T>,
-  ) => $Utils.JsPromise<T>
-
   // tested in getLogLevel.test.ts
   export function getLogLevel(log: Array<LogLevel | LogDefinition>): LogLevel | undefined;
 
@@ -1642,8 +1616,8 @@ export namespace Prisma {
     name: string | null
     slug: string | null
     description: string | null
-    createdAt: string | null
-    updatedAt: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type CategoryMaxAggregateOutputType = {
@@ -1651,8 +1625,8 @@ export namespace Prisma {
     name: string | null
     slug: string | null
     description: string | null
-    createdAt: string | null
-    updatedAt: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type CategoryCountAggregateOutputType = {
@@ -1771,8 +1745,8 @@ export namespace Prisma {
     name: string | null
     slug: string | null
     description: string | null
-    createdAt: string | null
-    updatedAt: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
     _count: CategoryCountAggregateOutputType | null
     _min: CategoryMinAggregateOutputType | null
     _max: CategoryMaxAggregateOutputType | null
@@ -1830,8 +1804,8 @@ export namespace Prisma {
       name: string | null
       slug: string | null
       description: string | null
-      createdAt: string | null
-      updatedAt: string | null
+      createdAt: Date | null
+      updatedAt: Date | null
     }, ExtArgs["result"]["category"]>
     composites: {}
   }
@@ -2206,8 +2180,8 @@ export namespace Prisma {
     readonly name: FieldRef<"Category", 'String'>
     readonly slug: FieldRef<"Category", 'String'>
     readonly description: FieldRef<"Category", 'String'>
-    readonly createdAt: FieldRef<"Category", 'String'>
-    readonly updatedAt: FieldRef<"Category", 'String'>
+    readonly createdAt: FieldRef<"Category", 'DateTime'>
+    readonly updatedAt: FieldRef<"Category", 'DateTime'>
   }
     
 
@@ -9682,9 +9656,7 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     slug: 'slug',
-    description: 'description',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    description: 'description'
   };
 
   export type CategoryOrderByRelevanceFieldEnum = (typeof CategoryOrderByRelevanceFieldEnum)[keyof typeof CategoryOrderByRelevanceFieldEnum]
@@ -9817,8 +9789,8 @@ export namespace Prisma {
     name?: StringNullableFilter<"Category"> | string | null
     slug?: StringNullableFilter<"Category"> | string | null
     description?: StringNullableFilter<"Category"> | string | null
-    createdAt?: StringNullableFilter<"Category"> | string | null
-    updatedAt?: StringNullableFilter<"Category"> | string | null
+    createdAt?: DateTimeNullableFilter<"Category"> | Date | string | null
+    updatedAt?: DateTimeNullableFilter<"Category"> | Date | string | null
     articles?: ArticleListRelationFilter
   }
 
@@ -9841,8 +9813,8 @@ export namespace Prisma {
     name?: StringNullableFilter<"Category"> | string | null
     slug?: StringNullableFilter<"Category"> | string | null
     description?: StringNullableFilter<"Category"> | string | null
-    createdAt?: StringNullableFilter<"Category"> | string | null
-    updatedAt?: StringNullableFilter<"Category"> | string | null
+    createdAt?: DateTimeNullableFilter<"Category"> | Date | string | null
+    updatedAt?: DateTimeNullableFilter<"Category"> | Date | string | null
     articles?: ArticleListRelationFilter
   }, "id">
 
@@ -9866,8 +9838,8 @@ export namespace Prisma {
     name?: StringNullableWithAggregatesFilter<"Category"> | string | null
     slug?: StringNullableWithAggregatesFilter<"Category"> | string | null
     description?: StringNullableWithAggregatesFilter<"Category"> | string | null
-    createdAt?: StringNullableWithAggregatesFilter<"Category"> | string | null
-    updatedAt?: StringNullableWithAggregatesFilter<"Category"> | string | null
+    createdAt?: DateTimeNullableWithAggregatesFilter<"Category"> | Date | string | null
+    updatedAt?: DateTimeNullableWithAggregatesFilter<"Category"> | Date | string | null
   }
 
   export type ArticleWhereInput = {
@@ -10385,8 +10357,8 @@ export namespace Prisma {
     name?: string | null
     slug?: string | null
     description?: string | null
-    createdAt?: string | null
-    updatedAt?: string | null
+    createdAt?: Date | string | null
+    updatedAt?: Date | string | null
     articles?: ArticleCreateNestedManyWithoutCategoryInput
   }
 
@@ -10395,8 +10367,8 @@ export namespace Prisma {
     name?: string | null
     slug?: string | null
     description?: string | null
-    createdAt?: string | null
-    updatedAt?: string | null
+    createdAt?: Date | string | null
+    updatedAt?: Date | string | null
     articles?: ArticleUncheckedCreateNestedManyWithoutCategoryInput
   }
 
@@ -10405,8 +10377,8 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: NullableStringFieldUpdateOperationsInput | string | null
-    updatedAt?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     articles?: ArticleUpdateManyWithoutCategoryNestedInput
   }
 
@@ -10415,8 +10387,8 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: NullableStringFieldUpdateOperationsInput | string | null
-    updatedAt?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     articles?: ArticleUncheckedUpdateManyWithoutCategoryNestedInput
   }
 
@@ -10425,8 +10397,8 @@ export namespace Prisma {
     name?: string | null
     slug?: string | null
     description?: string | null
-    createdAt?: string | null
-    updatedAt?: string | null
+    createdAt?: Date | string | null
+    updatedAt?: Date | string | null
   }
 
   export type CategoryUpdateManyMutationInput = {
@@ -10434,8 +10406,8 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: NullableStringFieldUpdateOperationsInput | string | null
-    updatedAt?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CategoryUncheckedUpdateManyInput = {
@@ -10443,8 +10415,8 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: NullableStringFieldUpdateOperationsInput | string | null
-    updatedAt?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ArticleCreateInput = {
@@ -11026,6 +10998,17 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type ArticleListRelationFilter = {
     every?: ArticleWhereInput
     some?: ArticleWhereInput
@@ -11108,6 +11091,20 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type CategoryNullableScalarRelationFilter = {
@@ -11270,17 +11267,6 @@ export namespace Prisma {
     parentId?: SortOrder
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type RoleNullableScalarRelationFilter = {
     is?: RoleWhereInput | null
     isNot?: RoleWhereInput | null
@@ -11320,20 +11306,6 @@ export namespace Prisma {
     roleId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type UserListRelationFilter = {
@@ -11480,6 +11452,10 @@ export namespace Prisma {
 
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type ArticleUpdateManyWithoutCategoryNestedInput = {
@@ -11734,10 +11710,6 @@ export namespace Prisma {
     connect?: AccessLogWhereUniqueInput | AccessLogWhereUniqueInput[]
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type RoleUpdateOneWithoutUsersNestedInput = {
     create?: XOR<RoleCreateWithoutUsersInput, RoleUncheckedCreateWithoutUsersInput>
     connectOrCreate?: RoleCreateOrConnectWithoutUsersInput
@@ -11908,6 +11880,17 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -11964,17 +11947,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -12078,8 +12050,8 @@ export namespace Prisma {
     name?: string | null
     slug?: string | null
     description?: string | null
-    createdAt?: string | null
-    updatedAt?: string | null
+    createdAt?: Date | string | null
+    updatedAt?: Date | string | null
   }
 
   export type CategoryUncheckedCreateWithoutArticlesInput = {
@@ -12087,8 +12059,8 @@ export namespace Prisma {
     name?: string | null
     slug?: string | null
     description?: string | null
-    createdAt?: string | null
-    updatedAt?: string | null
+    createdAt?: Date | string | null
+    updatedAt?: Date | string | null
   }
 
   export type CategoryCreateOrConnectWithoutArticlesInput = {
@@ -12205,8 +12177,8 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: NullableStringFieldUpdateOperationsInput | string | null
-    updatedAt?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CategoryUncheckedUpdateWithoutArticlesInput = {
@@ -12214,8 +12186,8 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: NullableStringFieldUpdateOperationsInput | string | null
-    updatedAt?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserUpsertWithoutArticlesInput = {

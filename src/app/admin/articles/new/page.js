@@ -114,7 +114,7 @@ const NewArticle = () => {
             slug: article.slug || '',
             excerpt: article.excerpt || '',
             content: article.content || '',
-            categoryId: article.categoryId || '',
+            categoryId: article.categoryId ? String(article.categoryId) : '',
             image: article.image || '',
             featured: article.featured === '1',
             published: article.published === '1',
@@ -211,7 +211,7 @@ const NewArticle = () => {
       }
 
       // Encontrar la categoría seleccionada
-      const selectedCategory = categories.find(cat => cat.id === formData.categoryId)
+      const selectedCategory = categories.find(cat => String(cat.id) === String(formData.categoryId))
       if (!selectedCategory) {
         throw new Error('Por favor selecciona una categoría válida')
       }
@@ -237,7 +237,7 @@ const NewArticle = () => {
         delete articleData.tags // Evitar enviar tags: requiere connect/disconnect y no está soportado en el endpoint
       } else {
         // Para POST, usar category slug como antes
-        const selectedCategory = categories.find(cat => cat.id === formData.categoryId)
+        const selectedCategory = categories.find(cat => String(cat.id) === String(formData.categoryId))
         if (selectedCategory) {
           articleData.category = selectedCategory.slug
           delete articleData.categoryId
@@ -477,7 +477,7 @@ const NewArticle = () => {
                   >
                     <option value="">Selecciona una categoría</option>
                     {categories.map(category => (
-                      <option key={category.id} value={category.id}>
+                      <option key={category.id} value={String(category.id)}>
                         {category.name}
                       </option>
                     ))}
@@ -632,7 +632,7 @@ const NewArticle = () => {
                 <div className="mb-4">
                   {formData.categoryId && (
                     <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                      {categories.find(c => c.id === formData.categoryId)?.name}
+                      {categories.find(c => String(c.id) === String(formData.categoryId))?.name}
                     </span>
                   )}
                   {formData.featured && (
@@ -667,10 +667,34 @@ const NewArticle = () => {
                 )}
               </div>
               
-              <div className="prose max-w-none">
-                <div className="whitespace-pre-wrap">
-                  {formData.content || 'Contenido del artículo aparecerá aquí...'}
-                </div>
+              <div className="prose prose-lg max-w-none">
+                <div
+                  dangerouslySetInnerHTML={{ __html: (() => {
+                    try {
+                      let html = formData.content || ''
+                      const decode = (s) => {
+                        const ta = document.createElement('textarea')
+                        ta.innerHTML = s
+                        return ta.value || s
+                      }
+                      for (let i = 0; i < 3; i++) {
+                        if (/[&]((lt|gt|amp|quot|#\d+));/i.test(html)) {
+                          html = decode(html)
+                        } else {
+                          break
+                        }
+                      }
+                      const parser = new DOMParser()
+                      const doc = parser.parseFromString(html, 'text/html')
+                      doc.querySelectorAll('.ql-ui').forEach(el => el.remove())
+                      doc.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'))
+                      doc.querySelectorAll('[data-list]').forEach(el => el.removeAttribute('data-list'))
+                      return doc.body.innerHTML || 'Contenido del artículo aparecerá aquí...'
+                    } catch {
+                      return formData.content || 'Contenido del artículo aparecerá aquí...'
+                    }
+                  })() }}
+                />
               </div>
             </div>
           </div>

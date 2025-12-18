@@ -13,8 +13,7 @@ export async function GET(request) {
 
     // Construir filtro de búsqueda
     const where = {
-      // En DB se almacenan como string "1"/"0"
-      published: '1',
+      published: true,
     }
 
     // Filtrar por categoría (slug)
@@ -24,7 +23,7 @@ export async function GET(request) {
 
     // Filtrar por destacados
     if (featured === 'true') {
-      where.featured = '1'
+      where.featured = true
     }
 
     // Filtrar por búsqueda
@@ -41,7 +40,6 @@ export async function GET(request) {
       prisma.article.findMany({
         where,
         include: {
-          // Relaciones correctas según schema.prisma
           category: true,
           author: true,
         },

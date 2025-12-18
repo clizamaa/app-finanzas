@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma-client2"
+  binaryTargets = ["native", "debian-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String    @id
+  name        String?
+  slug        String?
+  description String?
+  createdAt   DateTime?
+  updatedAt   DateTime?
+  articles    Article[]
+
+  @@map("category")
+}
+
+model Article {
+  id         String      @id
+  title      String?
+  slug       String?
+  excerpt    String?
+  content    String?
+  image      String?
+  status     String?
+  published  String? // stored as "1" or "0" in database
+  featured   String? // stored as "1" or "0" in database
+  views      String?
+  createdAt  String?
+  updatedAt  String?
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  authorId   String?
+  author     User?       @relation(fields: [authorId], references: [id])
+  comments   Comment[]
+  // tags        Tag[]     @relation("ArticleToTag") // Temporarily disabled
+  accessLogs AccessLog[]
+
+  @@map("article")
+}
+
+model Tag {
+  id   String  @id
+  name String?
+  slug String?
+  // articles Article[] @relation("ArticleToTag") // Temporarily disabled
+
+  @@map("tag")
+}
+
+model Comment {
+  id        String    @id
+  name      String?
+  email     String?
+  content   String?
+  approved  String? // stored as "1" or "0" in database
+  createdAt String?
+  articleId String?
+  article   Article?  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comment")
+}
+
+model User {
+  id         String      @id
+  email      String?
+  name       String?
+  password   String?
+  roleId     String?
+  role       Role?       @relation(fields: [roleId], references: [id])
+  articles   Article[]
+  accessLogs AccessLog[]
+  createdAt  DateTime?
+  updatedAt  DateTime?
+}
+
+model Role {
+  id          String    @id
+  name        String?
+  description String?
+  permissions String? // JSON stored as string
+  users       User[]
+  createdAt   DateTime?
+  updatedAt   DateTime?
+
+  @@map("role")
+}
+
+model AccessLog {
+  id        String   @id
+  ip        String?
+  userAgent String?
+  method    String?
+  path      String?
+  action    String? // visit_home, visit_articles, view_article, etc.
+  referrer  String?
+  articleId String? // Si es una visita a un artículo específico
+  article   Article? @relation(fields: [articleId], references: [id])
+  userId    String? // Si el usuario está autenticado
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt String?
+
+  @@index([ip])
+  @@index([path])
+  @@index([action])
+  @@index([createdAt])
+  @@map("accesslog")
+}
+
+model BlockedIP {
+  id        String    @id
+  ip        String    @unique
+  reason    String? // Razón del bloqueo
+  blockedBy String? // ID del admin que bloqueó
+  blockedAt DateTime? // Fecha de bloqueo
+  createdAt DateTime?
+  updatedAt DateTime?
+
+  @@index([ip])
+  @@map("blockedip")
+}
+
+// Explicit many-to-many relation table mapping - Temporarily disabled
+// model ArticleToTag {
+//   A String
+//   B String
+//   
+//   @@unique([A, B])
+//   @@map("_articletotag")
+// }

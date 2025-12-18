@@ -3,7 +3,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  output        = "../src/generated/prisma-client" 
+  output        = "../src/generated/prisma-client2" 
   binaryTargets = ["native", "debian-openssl-1.0.x"]
 }
 
@@ -17,8 +17,8 @@ model Category {
   name        String?
   slug        String?
   description String?
-  createdAt   String?
-  updatedAt   String?
+  createdAt   DateTime?
+  updatedAt   DateTime?
   articles    Article[]
   
   @@map("category")
@@ -28,15 +28,15 @@ model Article {
   id          String    @id
   title       String?
   slug        String?
-  excerpt     String?
-  content     String?
+  excerpt     String?   @db.MediumText
+  content     String?   @db.MediumText
   image       String?
   status      String?
-  published   String?   // stored as "1" or "0" in database
-  featured    String?   // stored as "1" or "0" in database
-  views       String?
-  createdAt   String?
-  updatedAt   String?
+  published   Boolean?
+  featured    Boolean?
+  views       Int?
+  createdAt   DateTime?
+  updatedAt   DateTime?
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id])
   authorId    String?
