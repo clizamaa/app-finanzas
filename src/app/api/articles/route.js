@@ -1,9 +1,11 @@
+export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Obtener todos los artículos públicos (solo los publicados)
 export async function GET(request) {
   try {
+    await prisma.$connect()
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const featured = searchParams.get('featured')
@@ -12,9 +14,7 @@ export async function GET(request) {
     const offset = parseInt(searchParams.get('offset')) || 0
 
     // Construir filtro de búsqueda
-    const where = {
-      published: true,
-    }
+    const where = {}
 
     // Filtrar por categoría (slug)
     if (category && category !== 'all') {
@@ -56,11 +56,84 @@ export async function GET(request) {
       offset,
     })
   } catch (error) {
-    console.error('Error al obtener artículos:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    try {
+      const params = new URL(request.url).searchParams
+      const category = params.get('category')
+      const featured = params.get('featured')
+      const search = params.get('search')
+      const limit = parseInt(params.get('limit')) || 10
+      const offset = parseInt(params.get('offset')) || 0
+
+      let whereClauses = []
+      let values = []
+
+      if (category && category !== 'all') {
+        whereClauses.push('c.slug = ?')
+        values.push(category)
+      }
+      if (featured === 'true') {
+        whereClauses.push('a.featured = 1')
+      }
+      if (search) {
+        whereClauses.push('(a.title LIKE ? OR a.excerpt LIKE ? OR a.content LIKE ?)')
+        values.push(`%${search}%`, `%${search}%`, `%${search}%`)
+      }
+
+      const whereSQL = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : ''
+
+      const totalRows = await prisma.$queryRawUnsafe(
+        `SELECT COUNT(*) AS count
+         FROM article a
+         LEFT JOIN category c ON a.categoryId = c.id
+         ${whereSQL}`,
+        ...values
+      )
+      const total = Array.isArray(totalRows) && totalRows[0] ? Number(totalRows[0].count) : 0
+
+      const rows = await prisma.$queryRawUnsafe(
+        `SELECT 
+           a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.featured, a.views, a.createdAt, a.updatedAt,
+           c.id AS categoryId, c.name AS categoryName, c.slug AS categorySlug,
+           u.id AS authorId, u.name AS authorName, u.email AS authorEmail
+         FROM article a
+         LEFT JOIN category c ON a.categoryId = c.id
+         LEFT JOIN User u ON a.authorId = u.id
+         ${whereSQL}
+         ORDER BY a.createdAt DESC
+         LIMIT ? OFFSET ?`,
+        ...values,
+        limit,
+        offset
+      )
+
+      const articles = rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        slug: r.slug,
+        excerpt: r.excerpt,
+        content: r.content,
+        image: r.image,
+        featured: r.featured === 1 || r.featured === true || r.featured === '1',
+        views: typeof r.views === 'number' ? r.views : (parseInt(r.views) || 0),
+        createdAt: typeof r.createdAt === 'string' ? r.createdAt : (r.createdAt?.toISOString?.() || r.createdAt),
+        updatedAt: typeof r.updatedAt === 'string' ? r.updatedAt : (r.updatedAt?.toISOString?.() || r.updatedAt),
+        category: r.categoryId ? { id: r.categoryId, name: r.categoryName, slug: r.categorySlug } : null,
+        author: r.authorId ? { id: r.authorId, name: r.authorName, email: r.authorEmail } : null
+      }))
+
+      return NextResponse.json({
+        articles,
+        total,
+        limit,
+        offset
+      })
+    } catch (fallbackErr) {
+      console.error('Error al obtener artículos (fallback):', fallbackErr)
+      return NextResponse.json(
+        { error: 'Error interno del servidor' },
+        { status: 500 }
+      )
+    }
   }
 }
 

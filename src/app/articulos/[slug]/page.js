@@ -9,7 +9,6 @@ import CommentSection from '@/components/CommentSection'
 import RelatedArticles from '@/components/RelatedArticles'
 import AccessTracker from '@/components/AccessTracker'
 import { useParams } from 'next/navigation'
-import { getAuthToken } from '@/lib/auth'
 
 // Metadata moved to layout.js due to 'use client' directive
 
@@ -26,10 +25,7 @@ const ArticlePage = () => {
         setLoading(true)
         setError(null)
         
-        const token = getAuthToken()
-        const response = await fetch(`/api/articles/${slug}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined
-        })
+        const response = await fetch(`/api/articles/${slug}`)
         if (!response.ok) {
           if (response.status === 404) {
             setError('Artículo no encontrado')

@@ -1,40 +1,68 @@
-const { PrismaClient } = require('../src/generated/prisma-client');
-const prisma = new PrismaClient();
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
 async function checkArticles() {
   try {
     console.log('=== ARTÍCULOS EN LA BASE DE DATOS ===\n');
     
-    const articles = await prisma.article.findMany({
-      include: {
-        Category: true,
-        User: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    let articles
+    try {
+      articles = await prisma.article.findMany({
+        include: {
+          category: true,
+          author: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
+    } catch (err) {
+      console.log('⚠️ Prisma findMany falló, usando consulta RAW...\n')
+      articles = await prisma.$queryRawUnsafe(
+        `SELECT 
+           a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.featured, a.views, a.createdAt, a.updatedAt,
+           c.id AS categoryId, c.name AS categoryName, c.slug AS categorySlug,
+           u.id AS authorId, u.name AS authorName
+         FROM article a
+         LEFT JOIN category c ON a.categoryId = c.id
+         LEFT JOIN User u ON a.authorId = u.id
+         ORDER BY a.createdAt DESC`
+      )
+      articles = articles.map(r => ({
+        id: r.id,
+        title: r.title,
+        slug: r.slug,
+        excerpt: r.excerpt,
+        content: r.content,
+        image: r.image,
+        featured: r.featured === 1 || r.featured === true || r.featured === '1',
+        views: typeof r.views === 'number' ? r.views : (parseInt(r.views) || 0),
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        category: r.categoryId ? { id: r.categoryId, name: r.categoryName, slug: r.categorySlug } : null,
+        author: r.authorId ? { id: r.authorId, name: r.authorName } : null
+      }))
+    }
     
     if (articles.length === 0) {
       console.log('❌ No se encontraron artículos en la base de datos.');
     } else {
-      console.log(`✅ Se encontraron ${articles.length} artículo(s):\n`);
+      console.log(`✅ Se encontraron ${articles.length} artículo(s):\n`)
       
       articles.forEach((article, index) => {
-        console.log(`Artículo ${index + 1}:`);
-        console.log(`  ID: ${article.id}`);
-        console.log(`  Título: ${article.title || 'Sin título'}`);
-        console.log(`  Slug: ${article.slug || 'Sin slug'}`);
-        console.log(`  Estado: ${article.status || 'Sin estado'}`);
-        console.log(`  Publicado: ${article.published || 'No especificado'}`);
-        console.log(`  Destacado: ${article.featured || 'No especificado'}`);
-        console.log(`  Vistas: ${article.views || '0'}`);
-        console.log(`  Categoría: ${article.Category?.name || 'Sin categoría'}`);
-      console.log(`  Autor: ${article.User?.name || 'Sin autor'}`);
-        console.log(`  Fecha creación: ${article.createdAt || 'No especificada'}`);
-        console.log(`  Última actualización: ${article.updatedAt || 'No especificada'}`);
-        console.log(`  Extracto: ${article.excerpt ? article.excerpt.substring(0, 100) + '...' : 'Sin extracto'}`);
-        console.log('');
+        console.log(`Artículo ${index + 1}:`)
+        console.log(`  ID: ${article.id}`)
+        console.log(`  Título: ${article.title || 'Sin título'}`)
+        console.log(`  Slug: ${article.slug || 'Sin slug'}`)
+        console.log(`  Publicado: ${article.published === true ? 'Sí' : 'No'}`)
+        console.log(`  Destacado: ${article.featured === true ? 'Sí' : 'No'}`)
+        console.log(`  Vistas: ${typeof article.views === 'number' ? article.views : (parseInt(article.views) || 0)}`)
+        console.log(`  Categoría: ${article.category?.name || 'Sin categoría'}`)
+        console.log(`  Autor: ${article.author?.name || 'Sin autor'}`)
+        console.log(`  Fecha creación: ${article.createdAt || 'No especificada'}`)
+        console.log(`  Última actualización: ${article.updatedAt || 'No especificada'}`)
+        console.log(`  Extracto: ${article.excerpt ? String(article.excerpt).substring(0, 100) + '...' : 'Sin extracto'}`)
+        console.log('')
       });
     }
     
@@ -54,7 +82,7 @@ async function checkArticles() {
     // Verificar estructura de URLs
     console.log('\n=== DIAGNÓSTICO DE VISIBILIDAD ===\n');
     
-    const publishedArticles = articles.filter(a => a.published === '1' || a.published === 1);
+    const publishedArticles = articles.filter(a => a.published === true)
     console.log(`Artículos publicados: ${publishedArticles.length}`);
     
     const articlesWithSlug = articles.filter(a => a.slug && a.slug.trim() !== '');
@@ -76,7 +104,7 @@ async function checkArticles() {
     console.error('❌ Error al consultar artículos:', error.message);
     console.error('Stack:', error.stack);
   } finally {
-    await prisma.$disconnect();
+      await prisma.$disconnect()
   }
 }
 
