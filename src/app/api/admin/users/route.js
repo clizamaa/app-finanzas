@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '../../../../generated/prisma-client'
+import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
 
-const prisma = new PrismaClient()
 const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
 
 // Middleware para verificar autenticación y permisos de admin

@@ -1,14 +1,13 @@
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
-const { PrismaClient } = require('./src/generated/prisma-client')
+const { prisma } = require('./src/lib/prisma')
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '216.246.47.124'
 const port = process.env.PORT || 3000
 
-// Prisma en entorno Node (server)
-const prisma = new PrismaClient()
+// Prisma en entorno Node (server) - instancia compartida
 
 // Helpers
 function getClientIp(req) {

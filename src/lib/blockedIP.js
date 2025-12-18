@@ -1,14 +1,4 @@
-import { PrismaClient } from '../generated/prisma-client/edge'
-
-let prisma
-
-// Función para obtener/crear instancia de Prisma
-function getPrismaInstance() {
-  if (!prisma) {
-    prisma = new PrismaClient()
-  }
-  return prisma
-}
+import { prisma } from './prisma'
 
 /**
  * Verificar si una IP está bloqueada
@@ -24,7 +14,7 @@ export async function checkBlockedIP(ip) {
 
     const prismaInstance = getPrismaInstance()
     
-    const blockedIP = await prismaInstance.blockedIP.findUnique({
+    const blockedIP = await prisma.blockedIP.findUnique({
       where: { ip },
       select: {
         ip: true,
@@ -57,8 +47,5 @@ export async function checkBlockedIP(ip) {
  * (útil en contextos donde el proceso termina)
  */
 export async function disconnectPrisma() {
-  if (prisma) {
-    await prisma.$disconnect()
-    prisma = null
-  }
+  await prisma.$disconnect()
 }
