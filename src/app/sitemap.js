@@ -1,6 +1,6 @@
-import { PrismaClient } from '../generated/prisma-client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+const prismaClient = prisma
 
 export default async function sitemap() {
   const baseUrl = process.env.SITE_URL || 'https://appfinanzashoy.com'
@@ -53,8 +53,8 @@ export default async function sitemap() {
 
   try {
     // Dynamic pages - Articles
-    const articles = await prisma.article.findMany({
-      where: { published: '1' },
+    const articles = await prismaClient.article.findMany({
+      where: { published: true },
       select: {
         slug: true,
         updatedAt: true,
@@ -74,7 +74,7 @@ export default async function sitemap() {
     }))
 
     // Dynamic pages - Categories
-    const categories = await prisma.category.findMany({
+    const categories = await prismaClient.category.findMany({
       select: {
         slug: true,
         updatedAt: true,
@@ -93,6 +93,6 @@ export default async function sitemap() {
     console.error('Error generating sitemap:', error)
     return staticPages
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }

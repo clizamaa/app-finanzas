@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '../../../../../generated/prisma-client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+const prismaClient = prisma
 const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
 
 // Middleware para verificar autenticación y permisos de admin
@@ -20,7 +20,7 @@ const verifyAdminAuth = async (request) => {
     const decoded = jwt.verify(token, JWT_SECRET)
     
     // Verificar que el usuario existe y es admin
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: { id: decoded.userId },
       include: { role: true }
     })
@@ -48,7 +48,7 @@ export async function GET(request, { params }) {
 
     const { id } = params
     
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: { id },
       include: {
         role: true,
@@ -114,7 +114,7 @@ export async function PUT(request, { params }) {
     }
 
     // Verificar que el usuario existe
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prismaClient.user.findUnique({
       where: { id }
     })
 
@@ -126,7 +126,7 @@ export async function PUT(request, { params }) {
     }
 
     // Verificar que el email no esté en uso por otro usuario
-    const emailInUse = await prisma.user.findFirst({
+    const emailInUse = await prismaClient.user.findFirst({
       where: {
         email,
         id: { not: id }
@@ -141,7 +141,7 @@ export async function PUT(request, { params }) {
     }
 
     // Verificar que el rol existe
-    const role = await prisma.role.findUnique({
+    const role = await prismaClient.role.findUnique({
       where: { id: roleId }
     })
 
@@ -171,7 +171,7 @@ export async function PUT(request, { params }) {
     }
 
     // Actualizar usuario
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prismaClient.user.update({
       where: { id },
       data: updateData,
       include: {
@@ -225,7 +225,7 @@ export async function DELETE(request, { params }) {
     const { id } = params
     
     // Verificar que el usuario existe
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: { id },
       include: { role: true }
     })
@@ -273,6 +273,6 @@ export async function DELETE(request, { params }) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }

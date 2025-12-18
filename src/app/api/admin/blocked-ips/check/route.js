@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '../../../../../generated/prisma-client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+const prismaClient = prisma
 
 // GET - Verificar si una IP está bloqueada
 export async function GET(request) {
@@ -18,7 +18,7 @@ export async function GET(request) {
     }
 
     // Verificar si la IP está bloqueada
-    const blockedIP = await prisma.BlockedIP.findUnique({
+    const blockedIP = await prismaClient.blockedIP.findUnique({
       where: { ip }
     })
 
@@ -55,6 +55,6 @@ export async function GET(request) {
       { status: 200 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }

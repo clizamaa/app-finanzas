@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '../../../../generated/prisma-client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+const prismaClient = prisma
 const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
 
 // Middleware para verificar autenticación
@@ -19,7 +19,7 @@ const verifyAuth = async (request) => {
     const decoded = jwt.verify(token, JWT_SECRET)
     
     // Verificar que el usuario existe
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: { id: decoded.userId },
       include: { role: true }
     })
@@ -53,7 +53,7 @@ export async function GET(request) {
       )
     }
 
-    const roles = await prisma.role.findMany({
+    const roles = await prismaClient.role.findMany({
       orderBy: {
         name: 'asc'
       }
@@ -70,6 +70,6 @@ export async function GET(request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }

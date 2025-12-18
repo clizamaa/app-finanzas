@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '../../../../generated/prisma-client'
+import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
 
-const prisma = new PrismaClient()
+const prismaClient = prisma
 const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
 
 // Middleware para verificar autenticación y permisos de admin
@@ -38,7 +38,7 @@ export async function GET(request) {
       )
     }
 
-    const blockedIPs = await prisma.BlockedIP.findMany({
+    const blockedIPs = await prismaClient.blockedIP.findMany({
       orderBy: {
         blockedAt: 'desc'
       }
@@ -55,7 +55,7 @@ export async function GET(request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }
 
@@ -80,7 +80,7 @@ export async function POST(request) {
     }
 
     // Verificar si la IP ya está bloqueada
-    const existingBlock = await prisma.BlockedIP.findUnique({
+    const existingBlock = await prismaClient.blockedIP.findUnique({
       where: { ip }
     })
 
@@ -92,7 +92,7 @@ export async function POST(request) {
     }
 
     // Crear el bloqueo
-    const blockedIP = await prisma.BlockedIP.create({
+    const blockedIP = await prismaClient.blockedIP.create({
       data: {
         id: randomUUID(),
         ip,
@@ -116,7 +116,7 @@ export async function POST(request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }
 
@@ -142,7 +142,7 @@ export async function DELETE(request) {
     }
 
     // Verificar si la IP está bloqueada
-    const blockedIP = await prisma.BlockedIP.findUnique({
+    const blockedIP = await prismaClient.blockedIP.findUnique({
       where: { ip }
     })
 
@@ -154,7 +154,7 @@ export async function DELETE(request) {
     }
 
     // Eliminar el bloqueo
-    await prisma.BlockedIP.delete({
+    await prismaClient.blockedIP.delete({
       where: { ip }
     })
 
@@ -169,6 +169,6 @@ export async function DELETE(request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prismaClient.$disconnect()
   }
 }
