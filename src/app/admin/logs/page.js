@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { authenticatedFetch } from '@/lib/auth'
 import { 
   ArrowLeft, 
   FileSearch, 
@@ -121,6 +122,12 @@ const LogsPage = () => {
     try {
       setLoading(true)
       setCurrentPage(page)
+      const t = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null
+      if (t) {
+        console.log('LogsPage: token present, first 10 chars:', t.substring(0, 10) + '...')
+      } else {
+        console.log('LogsPage: token missing before fetchLogs')
+      }
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '20'
@@ -136,13 +143,13 @@ const LogsPage = () => {
       }
       
       if (searchTerm) {
-        params.append('search', searchTerm)
-      }
+              params.append('search', searchTerm)
+            }
 
-      const response = await fetch(`/api/logs?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setLogs(data.logs)
+            const response = await authenticatedFetch(`/api/logs?${params}`, { cache: 'no-store' })
+            if (response.ok) {
+              const data = await response.json()
+              setLogs(data.logs)
         setFilteredLogs(data.logs)
         setStats(data.stats)
         setPagination(data.pagination)
@@ -179,7 +186,10 @@ const LogsPage = () => {
   }, [searchTerm, selectedAction, selectedDate])
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'Fecha inválida'
+    
     return date.toLocaleString('es-ES', {
       year: 'numeric',
       month: '2-digit',
@@ -208,12 +218,7 @@ const LogsPage = () => {
   // Cargar IPs bloqueadas
   const fetchBlockedIPs = async () => {
     try {
-      const token = localStorage.getItem('adminToken')
-      const response = await fetch('/api/admin/blocked-ips', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await authenticatedFetch('/api/admin/blocked-ips')
       
       if (response.ok) {
         const data = await response.json()
@@ -229,13 +234,8 @@ const LogsPage = () => {
   const blockIP = async (ip) => {
     try {
       setBlockingIP(ip)
-      const token = localStorage.getItem('adminToken')
-      const response = await fetch('/api/admin/blocked-ips', {
+      const response = await authenticatedFetch('/api/admin/blocked-ips', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({
           ip,
           reason: 'Bloqueado desde panel de logs'
@@ -279,12 +279,8 @@ const LogsPage = () => {
     
     try {
       setLoading(true)
-      const token = localStorage.getItem('adminToken')
-      const response = await fetch('/api/logs?all=true', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await authenticatedFetch('/api/logs?all=true', {
+        method: 'DELETE'
       })
       
       if (response.ok) {
@@ -308,12 +304,8 @@ const LogsPage = () => {
   const unblockIP = async (ip) => {
     try {
       setBlockingIP(ip)
-      const token = localStorage.getItem('adminToken')
-      const response = await fetch(`/api/admin/blocked-ips?ip=${encodeURIComponent(ip)}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await authenticatedFetch(`/api/admin/blocked-ips?ip=${encodeURIComponent(ip)}`, {
+        method: 'DELETE'
       })
       
       if (response.ok) {

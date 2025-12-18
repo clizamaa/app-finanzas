@@ -1,8 +1,11 @@
+export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
+import jwt from 'jsonwebtoken'
 
-// Función para obtener la IP real del cliente
+const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
+
 function getClientIP(request) {
   const forwarded = request.headers.get('x-forwarded-for')
   const realIP = request.headers.get('x-real-ip')
@@ -25,6 +28,7 @@ function getClientIP(request) {
 // POST - Registrar un nuevo log de acceso
 export async function POST(request) {
   try {
+    await prisma.$connect()
     const body = await request.json()
     const { path, action, articleId, userId } = body
 
@@ -40,20 +44,44 @@ export async function POST(request) {
     const referrer = request.headers.get('referer') || null
     const method = request.method
 
-    // Crear el log de acceso
-    const accessLog = await prisma.accessLog.create({
-      data: {
-        id: randomUUID(),
-        ip,
-        userAgent,
-        method,
-        path,
-        action,
-        referrer,
-        articleId: articleId || null,
-        userId: userId || null
+    // Crear el log de acceso (con reintento si el engine no está conectado)
+    let accessLog
+    try {
+      accessLog = await prisma.accessLog.create({
+        data: {
+          id: randomUUID(),
+          ip,
+          userAgent,
+          method,
+          path,
+          action,
+          referrer,
+          articleId: articleId || null,
+          userId: userId || null,
+          createdAt: new Date().toISOString()
+        }
+      })
+    } catch (err) {
+      if (String(err?.message || '').includes('Engine is not yet connected')) {
+        await prisma.$connect()
+        accessLog = await prisma.accessLog.create({
+          data: {
+            id: randomUUID(),
+            ip,
+            userAgent,
+            method,
+            path,
+            action,
+            referrer,
+            articleId: articleId || null,
+            userId: userId || null,
+            createdAt: new Date().toISOString()
+          }
+        })
+      } else {
+        throw err
       }
-    })
+    }
 
     return NextResponse.json({
       message: 'Log registrado exitosamente',
@@ -72,6 +100,33 @@ export async function POST(request) {
 // GET - Obtener logs de acceso (solo para administradores)
 export async function GET(request) {
   try {
+    await prisma.$connect()
+    // Verificar autenticación
+    const authHeader = request.headers.get('authorization')
+    console.log('GET /api/logs - Auth Header present:', !!authHeader)
+    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+      return NextResponse.json(
+        { message: 'Token no proporcionado' },
+        { status: 401 }
+      )
+    }
+
+    let token = authHeader.substring(7).trim()
+    if (token.startsWith('"') && token.endsWith('"')) {
+      token = token.slice(1, -1);
+    }
+
+    try {
+      console.log('GET /api/logs - Verifying token...')
+      jwt.verify(token, JWT_SECRET)
+    } catch (error) {
+      console.log('GET /api/logs - Token invalid:', error?.message)
+      return NextResponse.json(
+        { message: 'Token inválido' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 50
@@ -177,6 +232,29 @@ export async function GET(request) {
 // DELETE - Limpiar logs antiguos (solo para administradores)
 export async function DELETE(request) {
   try {
+    // Verificar autenticación
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+      return NextResponse.json(
+        { message: 'Token no proporcionado' },
+        { status: 401 }
+      )
+    }
+
+    let token = authHeader.substring(7).trim()
+    if (token.startsWith('"') && token.endsWith('"')) {
+      token = token.slice(1, -1);
+    }
+
+    try {
+      jwt.verify(token, JWT_SECRET)
+    } catch (error) {
+      return NextResponse.json(
+        { message: 'Token inválido' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const days = searchParams.get('days')
     const deleteAll = searchParams.get('all') === 'true'
