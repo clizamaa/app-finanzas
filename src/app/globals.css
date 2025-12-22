@@ -1,5 +1,50 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "quill/dist/quill.snow.css";
+
+.ql-align-justify {
+  text-align: justify;
+  hyphens: none !important;
+  word-break: normal !important;
+}
+
+/* Reset para evitar cortes de palabras agresivos */
+
+/* Fuerza absoluta para evitar cortes */
+.prose, .prose *, .ql-editor * {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -ms-hyphens: none !important;
+  
+  /* Esto evita que la palabra se rompa a la mitad */
+  word-break: keep-all !important; 
+  
+  /* Esto permite que la palabra entera baje a la siguiente línea */
+  overflow-wrap: normal !important; 
+  
+  /* Previene comportamientos extraños en navegadores antiguos */
+  word-wrap: normal !important;
+}
+
+.prose p {
+  text-align: justify;
+  text-justify: inter-word;
+  /* Si el justificado sigue dando problemas, cámbialo a 'left' para probar */
+}
+
+
+
+@media (min-width: 768px) {
+  .prose p {
+    text-align: justify;
+    text-justify: inter-word;
+  }
+}
+/* Justificar también el contenido de listas largas */
+.prose li {
+  text-align: justify;
+  text-justify: inter-word;
+}
 
 :root {
   /* Paleta Principal: Confianza y Estabilidad */

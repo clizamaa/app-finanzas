@@ -127,9 +127,25 @@ const RelatedArticles = ({ currentArticleId, category }) => {
                 </h3>
 
                 {/* Article Excerpt */}
-                <p className="text-text-gray mb-4 line-clamp-3">
-                  {article.excerpt}
-                </p>
+                <div 
+                  className="text-text-gray mb-4 line-clamp-3 break-words"
+                  dangerouslySetInnerHTML={{ __html: (() => {
+                    try {
+                      let html = article.excerpt || ''
+                      const decode = (s) => {
+                        const ta = document.createElement('textarea')
+                        ta.innerHTML = s
+                        return ta.value || s
+                      }
+                      if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
+                          html = decode(html)
+                      }
+                      return html
+                    } catch {
+                      return article.excerpt || ''
+                    }
+                  })() }}
+                />
 
                 {/* Article Meta */}
                 <div className="flex items-center justify-between text-sm text-text-gray">

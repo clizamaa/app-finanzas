@@ -193,9 +193,25 @@ export default function Home() {
                         <h3 className="text-lg font-bold text-navy mb-2 line-clamp-2 group-hover:text-emerald transition-colors duration-300">
                           {latestArticle.title}
                         </h3>
-                        <p className="text-gray-600 text-sm line-clamp-3 group-hover:text-gray-700 transition-colors duration-300">
-                          {latestArticle.excerpt}
-                        </p>
+                        <div 
+                          className="text-gray-600 text-sm line-clamp-3 group-hover:text-gray-700 transition-colors duration-300 break-words"
+                          dangerouslySetInnerHTML={{ __html: (() => {
+                            try {
+                              let html = latestArticle.excerpt || ''
+                              const decode = (s) => {
+                                const ta = document.createElement('textarea')
+                                ta.innerHTML = s
+                                return ta.value || s
+                              }
+                              if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
+                                  html = decode(html)
+                              }
+                              return html
+                            } catch {
+                              return latestArticle.excerpt || ''
+                            }
+                          })() }}
+                        />
                         <div className="mt-6 relative overflow-hidden rounded-xl">
                           <div className="bg-gradient-to-r from-emerald/10 to-blue/10 rounded-xl p-4 border border-emerald/20">
                             <div className="flex items-center justify-between">

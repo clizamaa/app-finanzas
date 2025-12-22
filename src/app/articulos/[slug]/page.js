@@ -25,7 +25,15 @@ const ArticlePage = () => {
         setLoading(true)
         setError(null)
         
-        const response = await fetch(`/api/articles/${slug}`)
+        console.log('Fetching article with slug:', slug)
+        const response = await fetch(`/api/articles/${slug}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+        
+        console.log('Response status:', response.status)
         if (!response.ok) {
           if (response.status === 404) {
             setError('Artículo no encontrado')
@@ -121,7 +129,7 @@ const ArticlePage = () => {
       <AccessTracker articleId={article.id} />
       {/* Breadcrumb */}
       <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-sm text-gray-500">
             <Link href="/" className="hover:text-blue-600">Inicio</Link>
             <span>/</span>
@@ -136,7 +144,7 @@ const ArticlePage = () => {
         </div>
       </div>
 
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <article className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Button */}
         <Link 
           href="/articulos"
@@ -158,9 +166,26 @@ const ArticlePage = () => {
             {article.title}
           </h1>
           
-          <p className="text-xl text-gray-600 mb-6">
-            {article.excerpt}
-          </p>
+          <div className="text-xl text-gray-600 mb-6 break-words whitespace-normal"
+            dangerouslySetInnerHTML={{ __html: (() => {
+              try {
+                let html = article.excerpt || ''
+                // Decode HTML entities (like &nbsp;)
+                const decode = (s) => {
+                  const ta = document.createElement('textarea')
+                  ta.innerHTML = s
+                  return ta.value || s
+                }
+                // Si parece tener entidades, decodificar
+                if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
+                    html = decode(html)
+                }
+                return html
+              } catch {
+                return article.excerpt || ''
+              }
+            })() }}
+          />
           
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4 md:mb-0">
@@ -188,27 +213,11 @@ const ArticlePage = () => {
           </div>
         </header>
 
-        {/* Article Image */}
-        {article.image ? (
-          <div className="mb-8">
-            <img 
-              src={article.image} 
-              alt={article.title}
-              className="w-full h-64 md:h-96 object-cover rounded-lg"
-            />
-          </div>
-        ) : (
-          <div className="mb-8">
-            <div className="h-64 md:h-96 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-2xl">{article.Category?.name || article.category?.name}</span>
-            </div>
-          </div>
-        )}
-
         {/* Article Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+        <div className="bg-white rounded-lg shadow-sm p-8 mb-8 overflow-hidden">
           <div
-            className="prose prose-lg max-w-none whitespace-pre-wrap"
+            lang="es"
+            className="prose prose-lg max-w-none break-words"
             dangerouslySetInnerHTML={{ __html: (() => {
               try {
                 let html = article.content || ''
@@ -218,19 +227,21 @@ const ArticlePage = () => {
                   return ta.value || s
                 }
                 for (let i = 0; i < 3; i++) {
-                  if (/[&]((lt|gt|amp|quot|#\d+));/i.test(html)) {
+                  if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
                     html = decode(html)
                   } else {
                     break
                   }
                 }
+                html = html.replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ')
+
                 const parser = new DOMParser()
                 const doc = parser.parseFromString(html, 'text/html')
                 doc.querySelectorAll('.ql-ui').forEach(el => el.remove())
                 doc.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'))
                 doc.querySelectorAll('[data-list]').forEach(el => el.removeAttribute('data-list'))
                 return doc.body.innerHTML
-              } catch {
+              } catch (e) {
                 return article.content || ''
               }
             })() }}

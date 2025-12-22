@@ -240,7 +240,7 @@ const ArticulosPage = () => {
                   .map((article, index) => (
                     <article 
                       key={article.id} 
-                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 ${
+                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 overflow-hidden ${
                         isAnimating ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
                       }`}
                       style={{
@@ -287,9 +287,26 @@ const ArticulosPage = () => {
                             </Link>
                           </h3>
                           
-                          <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                            {article.excerpt}
-                          </p>
+                          <div className="text-gray-600 mb-6 text-lg leading-relaxed break-words"
+                            dangerouslySetInnerHTML={{ __html: (() => {
+                              try {
+                                let html = article.excerpt || ''
+                                // Decode HTML entities (like &nbsp;)
+                                const decode = (s) => {
+                                  const ta = document.createElement('textarea')
+                                  ta.innerHTML = s
+                                  return ta.value || s
+                                }
+                                // Si parece tener entidades, decodificar
+                                if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
+                                    html = decode(html)
+                                }
+                                return html
+                              } catch {
+                                return article.excerpt || ''
+                              }
+                            })() }}
+                          />
                           
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-6 text-sm text-gray-500">

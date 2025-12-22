@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
   const path = request.nextUrl.pathname || '/'
+  console.log(`[Middleware] Incoming request: ${request.method} ${path}`)
+
   if (path.startsWith('/api/admin')) {
     return NextResponse.json({ message: 'Admin deshabilitado' }, { status: 404 })
   }

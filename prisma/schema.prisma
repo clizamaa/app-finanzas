@@ -38,8 +38,6 @@ model Article {
   updatedAt   DateTime?
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id])
-  authorId    String?
-  author      User?     @relation(fields: [authorId], references: [id])
   comments    Comment[]
   // tags        Tag[]     @relation("ArticleToTag") // Temporarily disabled
   accessLogs  AccessLog[]
@@ -72,31 +70,6 @@ model Comment {
   @@map("comment")
 }
 
-model User {
-  id        String   @id
-  email     String?
-  name      String?
-  password  String?
-  roleId    String?
-  role      Role?    @relation(fields: [roleId], references: [id])
-  articles  Article[]
-  accessLogs AccessLog[]
-  createdAt DateTime?
-  updatedAt DateTime?
-}
-
-model Role {
-  id          String @id
-  name        String?
-  description String?
-  permissions String?  // JSON stored as string
-  users       User[]
-  createdAt   DateTime?
-  updatedAt   DateTime?
-  
-  @@map("role")
-}
-
 model AccessLog {
   id        String   @id
   ip        String?
@@ -108,7 +81,6 @@ model AccessLog {
   articleId String?  // Si es una visita a un artículo específico
   article   Article? @relation(fields: [articleId], references: [id])
   userId    String?  // Si el usuario está autenticado
-  user      User?    @relation(fields: [userId], references: [id])
   createdAt String?
   
   @@index([ip])

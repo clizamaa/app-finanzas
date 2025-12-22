@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 // GET - Obtener todos los artículos públicos (solo los publicados)
 export async function GET(request) {
+  console.log('API /api/articles hit')
   try {
     await prisma.$connect()
     const { searchParams } = new URL(request.url)
@@ -14,7 +15,9 @@ export async function GET(request) {
     const offset = parseInt(searchParams.get('offset')) || 0
 
     // Construir filtro de búsqueda
-    const where = {}
+    const where = {
+      published: true
+    }
 
     // Filtrar por categoría (slug)
     if (category && category !== 'all') {
@@ -41,7 +44,6 @@ export async function GET(request) {
         where,
         include: {
           category: true,
-          author: true,
         },
         orderBy: { createdAt: 'desc' },
         skip: offset,
@@ -64,7 +66,7 @@ export async function GET(request) {
       const limit = parseInt(params.get('limit')) || 10
       const offset = parseInt(params.get('offset')) || 0
 
-      let whereClauses = []
+      let whereClauses = ['a.published = 1']
       let values = []
 
       if (category && category !== 'all') {
@@ -93,11 +95,9 @@ export async function GET(request) {
       const rows = await prisma.$queryRawUnsafe(
         `SELECT 
            a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.featured, a.views, a.createdAt, a.updatedAt,
-           c.id AS categoryId, c.name AS categoryName, c.slug AS categorySlug,
-           u.id AS authorId, u.name AS authorName, u.email AS authorEmail
+           c.id AS categoryId, c.name AS categoryName, c.slug AS categorySlug
          FROM article a
          LEFT JOIN category c ON a.categoryId = c.id
-         LEFT JOIN User u ON a.authorId = u.id
          ${whereSQL}
          ORDER BY a.createdAt DESC
          LIMIT ? OFFSET ?`,
@@ -118,7 +118,7 @@ export async function GET(request) {
         createdAt: typeof r.createdAt === 'string' ? r.createdAt : (r.createdAt?.toISOString?.() || r.createdAt),
         updatedAt: typeof r.updatedAt === 'string' ? r.updatedAt : (r.updatedAt?.toISOString?.() || r.updatedAt),
         category: r.categoryId ? { id: r.categoryId, name: r.categoryName, slug: r.categorySlug } : null,
-        author: r.authorId ? { id: r.authorId, name: r.authorName, email: r.authorEmail } : null
+        author: null
       }))
 
       return NextResponse.json({

@@ -173,7 +173,8 @@ let tutorials = [
 // GET - Obtener tutorial por ID
 export async function GET(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const paramsData = await params
+    const id = parseInt(paramsData.id)
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -209,7 +210,8 @@ export async function GET(request, { params }) {
 // PUT - Actualizar tutorial por ID
 export async function PUT(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const paramsData = await params
+    const id = parseInt(paramsData.id)
     const body = await request.json()
     
     if (isNaN(id)) {
@@ -296,7 +298,8 @@ export async function PUT(request, { params }) {
 // DELETE - Eliminar tutorial por ID
 export async function DELETE(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const paramsData = await params
+    const id = parseInt(paramsData.id)
     
     if (isNaN(id)) {
       return NextResponse.json(

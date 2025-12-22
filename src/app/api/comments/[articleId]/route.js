@@ -5,7 +5,8 @@ import { randomUUID } from 'crypto'
 // GET - Obtener comentarios de un artículo
 export async function GET(request, { params }) {
   try {
-    const { articleId } = params
+    const { articleId } = await params
+    await prisma.$connect()
     
     const comments = await prisma.comment.findMany({
       where: { 
@@ -38,8 +39,9 @@ export async function GET(request, { params }) {
 // POST - Crear nuevo comentario
 export async function POST(request, { params }) {
   try {
-    const { articleId } = params
+    const { articleId } = await params
     const { name, email, content, parentId } = await request.json()
+    await prisma.$connect()
 
     // Validaciones básicas
     if (!name || !content) {
@@ -58,7 +60,8 @@ export async function POST(request, { params }) {
 
     // Verificar que el artículo existe
     const article = await prisma.article.findUnique({
-      where: { id: articleId }
+      where: { id: articleId },
+      select: { id: true }
     })
 
     if (!article) {

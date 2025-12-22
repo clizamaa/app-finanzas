@@ -149,9 +149,25 @@ const FeaturedArticles = () => {
                   </Link>
                 </h3>
                 
-                <p className="text-text-gray mb-4 line-clamp-3">
-                  {article.excerpt || article.content?.substring(0, 150) + '...'}
-                </p>
+                <div 
+                  className="text-text-gray mb-4 line-clamp-3 break-words"
+                  dangerouslySetInnerHTML={{ __html: (() => {
+                    try {
+                      let html = article.excerpt || article.content?.substring(0, 150) + '...' || ''
+                      const decode = (s) => {
+                        const ta = document.createElement('textarea')
+                        ta.innerHTML = s
+                        return ta.value || s
+                      }
+                      if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
+                          html = decode(html)
+                      }
+                      return html
+                    } catch {
+                      return article.excerpt || article.content?.substring(0, 150) + '...' || ''
+                    }
+                  })() }}
+                />
                 
                 <div className="flex items-center justify-between text-sm text-text-gray mb-4">
                   <div className="flex items-center space-x-4">

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 // GET - Obtener categoría por ID
 export async function GET(request, { params }) {
   try {
-    const { id } = params
+    const { id } = await params
     
     const category = await prisma.category.findUnique({
       where: { id },
@@ -46,7 +46,8 @@ export async function GET(request, { params }) {
 // PUT - Actualizar categoría por ID
 export async function PUT(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const paramsData = await params
+    const id = parseInt(paramsData.id)
     const body = await request.json()
     
     if (isNaN(id)) {

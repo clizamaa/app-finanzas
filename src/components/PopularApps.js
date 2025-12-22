@@ -164,9 +164,25 @@ const PopularApps = () => {
                 </span>
               </div>
 
-              <p className="text-text-gray mb-4 line-clamp-3">
-                {app.excerpt || app.content?.substring(0, 150) + '...'}
-              </p>
+              <div 
+                className="text-text-gray mb-4 line-clamp-3 break-words"
+                dangerouslySetInnerHTML={{ __html: (() => {
+                  try {
+                    let html = app.excerpt || app.content?.substring(0, 150) + '...' || ''
+                    const decode = (s) => {
+                      const ta = document.createElement('textarea')
+                      ta.innerHTML = s
+                      return ta.value || s
+                    }
+                    if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
+                        html = decode(html)
+                    }
+                    return html
+                  } catch {
+                    return app.excerpt || app.content?.substring(0, 150) + '...' || ''
+                  }
+                })() }}
+              />
 
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">

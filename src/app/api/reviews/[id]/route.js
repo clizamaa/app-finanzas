@@ -147,7 +147,8 @@ let reviews = [
 // GET - Obtener reseña por ID
 export async function GET(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const paramsData = await params
+    const id = parseInt(paramsData.id)
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -183,7 +184,8 @@ export async function GET(request, { params }) {
 // PUT - Actualizar reseña por ID
 export async function PUT(request, { params }) {
   try {
-    const id = parseInt(params.id)
+    const paramsData = await params
+    const id = parseInt(paramsData.id)
     const body = await request.json()
     
     if (isNaN(id)) {
