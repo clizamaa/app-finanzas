@@ -1,37 +1,10 @@
 import { NextResponse } from 'next/server'
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
-import jwt from 'jsonwebtoken'
-
-// Función para verificar el token JWT
-function verifyToken(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null
-  }
-
-  const token = authHeader.substring(7)
-  try {
-    const secret = process.env.JWT_SECRET || 'tu-clave-secreta-muy-segura'
-    const decoded = jwt.verify(token, secret)
-    return decoded
-  } catch (error) {
-    return null
-  }
-}
 
 export const runtime = 'nodejs'
 export async function POST(request) {
   try {
-    // Verificar autenticación
-    const decoded = verifyToken(request)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'Token de autenticación inválido o faltante' },
-        { status: 401 }
-      )
-    }
-
     const data = await request.formData()
     const file = data.get('file')
 
@@ -82,12 +55,13 @@ export async function POST(request) {
       await writeFile(filePath, buffer)
     }
 
-    // Retornar URL del archivo
-    const fileUrl = `/uploads/${fileName}`
+    // Retornar URL absoluta del archivo
+    const reqUrl = new URL(request.url)
+    const fileUrl = `${reqUrl.protocol}//${reqUrl.host}/uploads/${fileName}`
 
     return NextResponse.json({
-      message: 'Archivo subido exitosamente',
       url: fileUrl,
+      message: 'Archivo subido exitosamente',
       filename: fileName,
       size: file.size,
       type: file.type
