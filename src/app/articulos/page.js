@@ -245,7 +245,7 @@ const ArticulosPage = () => {
                   .map((article, index) => (
                     <article 
                       key={article.id} 
-                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 overflow-hidden scale-[0.6] origin-top ${
+                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 overflow-hidden scale-[0.9] origin-top ${
                         isAnimating ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
                       }`}
                       style={{
