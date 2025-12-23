@@ -130,9 +130,14 @@ const ArticulosPage = () => {
 
   if (articles.length === 0) {
     return (
-      <div className="bg-white min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+      <div className="bg-white min-h-screen flex items-center justify-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
           <p className="text-gray-600 text-lg">No hay artículos publicados aún.</p>
+          <img
+            src="/images/not_found.png"
+            alt="Sin artículos disponibles"
+            className="mt-6 w-[36rem] max-w-full h-auto opacity-90"
+          />
         </div>
       </div>
     )
@@ -240,7 +245,7 @@ const ArticulosPage = () => {
                   .map((article, index) => (
                     <article 
                       key={article.id} 
-                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 overflow-hidden ${
+                      className={`bg-white rounded-xl shadow-md p-8 hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 border border-gray-100 overflow-hidden scale-[0.6] origin-top ${
                         isAnimating ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
                       }`}
                       style={{

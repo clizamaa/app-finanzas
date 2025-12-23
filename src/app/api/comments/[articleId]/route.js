@@ -92,7 +92,7 @@ export async function POST(request, { params }) {
       content: content.trim(),
       articleId,
       parentId: parentId || null,
-      approved: '1', // Auto-aprobar por ahora
+      approved: '0',
       createdAt: new Date().toISOString()
     }
 
