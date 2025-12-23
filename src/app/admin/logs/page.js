@@ -2,7 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { authenticatedFetch } from '@/lib/auth'
+
+// Función helper para peticiones autenticadas
+const authenticatedFetch = async (url, options = {}) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  })
+}
 import { 
   ArrowLeft, 
   FileSearch, 
