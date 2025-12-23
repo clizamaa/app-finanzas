@@ -56,8 +56,21 @@ export async function POST(request) {
     }
 
     // Retornar URL absoluta del archivo
-    const reqUrl = new URL(request.url)
-    const fileUrl = `${reqUrl.protocol}//${reqUrl.host}/uploads/${fileName}`
+    // Priorizar variable de entorno, luego headers de proxy, y finalmente request.url
+    let baseUrl = ''
+    
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+    } else if (request.headers.get('x-forwarded-host')) {
+      const protocol = request.headers.get('x-forwarded-proto') || 'https'
+      const host = request.headers.get('x-forwarded-host')
+      baseUrl = `${protocol}://${host}`
+    } else {
+      const reqUrl = new URL(request.url)
+      baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
+    }
+
+    const fileUrl = `${baseUrl}/uploads/${fileName}`
 
     return NextResponse.json({
       url: fileUrl,
