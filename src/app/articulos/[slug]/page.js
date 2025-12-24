@@ -18,6 +18,7 @@ const ArticlePage = () => {
   const [error, setError] = useState(null)
   const params = useParams()
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug
+  const [bannerUrl, setBannerUrl] = useState(null)
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -59,6 +60,20 @@ const ArticlePage = () => {
       fetchArticle()
     }
   }, [slug])
+
+  useEffect(() => {
+    const fetchBanner = async () => {
+      if (!article?.id) return
+      try {
+        const res = await fetch(`/api/banner/${article.id}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.url) setBannerUrl(data.url)
+        }
+      } catch {}
+    }
+    fetchBanner()
+  }, [article?.id])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -186,6 +201,14 @@ const ArticlePage = () => {
               }
             })() }}
           />
+          
+          <div className="my-6 w-full">
+            {bannerUrl ? (
+              <img src={bannerUrl} alt="Banner" className="w-full h-24 md:h-28 object-cover rounded-md" />
+            ) : (
+              <div className="h-24 md:h-28 w-full"></div>
+            )}
+          </div>
           
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4 md:mb-0">

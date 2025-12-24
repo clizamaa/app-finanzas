@@ -296,22 +296,21 @@ const ArticulosPage = () => {
                             dangerouslySetInnerHTML={{ __html: (() => {
                               try {
                                 let html = article.excerpt || ''
-                                // Decode HTML entities (like &nbsp;)
                                 const decode = (s) => {
                                   const ta = document.createElement('textarea')
                                   ta.innerHTML = s
                                   return ta.value || s
                                 }
-                                // Si parece tener entidades, decodificar
-                                if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
-                                    html = decode(html)
-                                }
+                                html = html.replace(/&(nbsp|NBSP|#160);?/g, ' ').replace(/\u00A0/g, ' ')
+                                if (/[&]((lt|gt|amp|quot|nbsp|#\d+));?/i.test(html)) html = decode(html)
                                 return html
                               } catch {
                                 return article.excerpt || ''
                               }
                             })() }}
                           />
+                          
+                          <div className="my-6 h-24 md:h-28 w-full"></div>
                           
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-6 text-sm text-gray-500">

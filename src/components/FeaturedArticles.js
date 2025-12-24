@@ -153,18 +153,29 @@ const FeaturedArticles = () => {
                   className="text-text-gray mb-4 line-clamp-3 break-words"
                   dangerouslySetInnerHTML={{ __html: (() => {
                     try {
-                      let html = article.excerpt || article.content?.substring(0, 150) + '...' || ''
+                      let html = article.excerpt || (() => {
+                        const raw = article.content || ''
+                        const text = raw.replace(/<[^>]*>/g, '')
+                          .replace(/&(nbsp|NBSP|#160);?/g, ' ')
+                          .replace(/\u00A0/g, ' ')
+                        const decoded = (() => {
+                          const ta = document.createElement('textarea')
+                          ta.innerHTML = text
+                          return ta.value || text
+                        })()
+                        const sliced = decoded.slice(0, 150).replace(/\s+\S*$/, '')
+                        return sliced + (decoded.length > 150 ? '…' : '')
+                      })()
                       const decode = (s) => {
                         const ta = document.createElement('textarea')
                         ta.innerHTML = s
                         return ta.value || s
                       }
-                      if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
-                          html = decode(html)
-                      }
+                      html = html.replace(/&(nbsp|NBSP|#160);?/g, ' ').replace(/\u00A0/g, ' ')
+                      if (/[&]((lt|gt|amp|quot|nbsp|#\d+));?/i.test(html)) html = decode(html)
                       return html
                     } catch {
-                      return article.excerpt || article.content?.substring(0, 150) + '...' || ''
+                      return article.excerpt || ''
                     }
                   })() }}
                 />

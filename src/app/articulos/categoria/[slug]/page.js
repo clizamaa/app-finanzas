@@ -170,9 +170,25 @@ const CategoryPage = ({ params }) => {
                   </h2>
 
                   {/* Article Excerpt */}
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {article.excerpt}
-                  </p>
+                  <div
+                    className="text-gray-600 mb-4 line-clamp-3 break-words"
+                    dangerouslySetInnerHTML={{ __html: (() => {
+                      try {
+                        let html = article.excerpt || ''
+                        const decode = (s) => {
+                          if (typeof document === 'undefined') return s
+                          const ta = document.createElement('textarea')
+                          ta.innerHTML = s
+                          return ta.value || s
+                        }
+                        html = html.replace(/&(nbsp|NBSP|#160);?/g, ' ').replace(/\u00A0/g, ' ')
+                        if (/[&]((lt|gt|amp|quot|nbsp|#\d+));?/i.test(html)) html = decode(html)
+                        return html
+                      } catch {
+                        return article.excerpt || ''
+                      }
+                    })() }}
+                  />
 
                   {/* Article Meta */}
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4">

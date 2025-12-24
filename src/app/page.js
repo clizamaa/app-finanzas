@@ -203,9 +203,8 @@ export default function Home() {
                                 ta.innerHTML = s
                                 return ta.value || s
                               }
-                              if (/[&]((lt|gt|amp|quot|nbsp|#\d+));/i.test(html)) {
-                                  html = decode(html)
-                              }
+                              html = html.replace(/&(nbsp|NBSP|#160);?/g, ' ').replace(/\u00A0/g, ' ')
+                              if (/[&]((lt|gt|amp|quot|nbsp|#\d+));?/i.test(html)) html = decode(html)
                               return html
                             } catch {
                               return latestArticle.excerpt || ''
