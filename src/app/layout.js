@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import CookieBanner from '@/components/CookieBanner';
 import AccessTracker from '@/components/AccessTracker';
 import StructuredData from '@/components/StructuredData';
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -62,6 +63,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={inter.variable}>
+      <head>
+        <Script
+          id="adsense-loader"
+          strategy="beforeInteractive"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6333563034016198"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="font-sans antialiased bg-gray-50 text-gray-900">
         <div className="min-h-screen flex flex-col">
           <Navbar />
