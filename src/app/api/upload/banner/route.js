@@ -1,15 +1,29 @@
 import { NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'
 export async function POST(request) {
   try {
     const data = await request.formData()
     const file = data.get('file')
-    const articleId = data.get('articleId')
-    if (!file || !articleId) {
-      return NextResponse.json({ error: 'Archivo o articleId faltante' }, { status: 400 })
+    let articleId = data.get('articleId')
+    const articleSlug = data.get('articleSlug')
+    if (!file) {
+      return NextResponse.json({ error: 'Archivo faltante' }, { status: 400 })
+    }
+    if (!articleId && articleSlug) {
+      try {
+        const found = await prisma.article.findFirst({
+          where: { OR: [{ slug: articleSlug }, { id: articleSlug }] },
+          select: { id: true }
+        })
+        articleId = found?.id || null
+      } catch {}
+    }
+    if (!articleId) {
+      return NextResponse.json({ error: 'articleId o articleSlug requeridos' }, { status: 400 })
     }
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
     if (!allowedTypes.includes(file.type)) {

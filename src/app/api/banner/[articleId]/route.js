@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server'
 import { readdir, stat } from 'fs/promises'
 import { join } from 'path'
+import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'
 export async function GET(request, { params }) {
   try {
-    const articleId = params.articleId
+    const resolvedParams = await params
+    const raw = resolvedParams?.articleId
+    let articleId = raw
+    try {
+      const found = await prisma.article.findFirst({
+        where: { OR: [{ id: raw }, { slug: raw }] },
+        select: { id: true }
+      })
+      articleId = found?.id || articleId
+    } catch {}
     if (!articleId) {
       return NextResponse.json({ error: 'articleId faltante' }, { status: 400 })
     }

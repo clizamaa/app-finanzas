@@ -44,6 +44,16 @@ export async function POST(request) {
     const referrer = request.headers.get('referer') || null
     const method = request.method
 
+    // Validar foreign keys opcionales
+    let safeArticleId = null
+    if (articleId) {
+      try {
+        const exists = await prisma.article.findUnique({ where: { id: articleId }, select: { id: true } })
+        if (exists) safeArticleId = articleId
+      } catch {}
+    }
+    let safeUserId = userId || null
+
     // Crear el log de acceso (con reintento si el engine no está conectado)
     let accessLog
     try {
@@ -56,8 +66,8 @@ export async function POST(request) {
           path,
           action,
           referrer,
-          articleId: articleId || null,
-          userId: userId || null,
+          articleId: safeArticleId,
+          userId: safeUserId,
           createdAt: new Date().toISOString()
         }
       })
@@ -73,8 +83,8 @@ export async function POST(request) {
             path,
             action,
             referrer,
-            articleId: articleId || null,
-            userId: userId || null,
+            articleId: safeArticleId,
+            userId: safeUserId,
             createdAt: new Date().toISOString()
           }
         })
