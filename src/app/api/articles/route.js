@@ -94,7 +94,7 @@ export async function GET(request) {
 
       const rows = await prisma.$queryRawUnsafe(
         `SELECT 
-           a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.featured, a.views, a.createdAt, a.updatedAt,
+           a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.banner, a.featured, a.views, a.createdAt, a.updatedAt,
            c.id AS categoryId, c.name AS categoryName, c.slug AS categorySlug
          FROM article a
          LEFT JOIN category c ON a.categoryId = c.id
@@ -113,6 +113,7 @@ export async function GET(request) {
         excerpt: r.excerpt,
         content: r.content,
         image: r.image,
+        banner: r.banner,
         featured: r.featured === 1 || r.featured === true || r.featured === '1',
         views: typeof r.views === 'number' ? r.views : (parseInt(r.views) || 0),
         createdAt: typeof r.createdAt === 'string' ? r.createdAt : (r.createdAt?.toISOString?.() || r.createdAt),

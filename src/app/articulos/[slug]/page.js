@@ -48,8 +48,8 @@ const ArticlePage = () => {
         
         const data = await response.json()
         setArticle(data.article)
-        if (data.article?.bannerUrl) {
-          setBannerUrl(data.article.bannerUrl)
+        if (data.article?.banner || data.article?.bannerUrl) {
+          setBannerUrl(data.article.banner || data.article.bannerUrl)
         }
       } catch (error) {
         console.error('Error fetching article:', error)

@@ -38,7 +38,17 @@ export async function GET(request, { params }) {
       })
     }
 
-    return NextResponse.json({ article })
+    // Intentar obtener el banner vía SQL crudo (aunque Prisma no lo tenga en el modelo)
+    try {
+      const rows = await prisma.$queryRawUnsafe(
+        `SELECT banner FROM article WHERE id = ? LIMIT 1`,
+        article.id
+      )
+      const banner = Array.isArray(rows) && rows[0] ? rows[0].banner : null
+      return NextResponse.json({ article: { ...article, banner } })
+    } catch {
+      return NextResponse.json({ article })
+    }
   } catch (error) {
     console.error('Error fetching article by slug (Prisma), trying RAW:', error)
     
@@ -47,7 +57,7 @@ export async function GET(request, { params }) {
       // Fallback a SQL crudo si Prisma falla (por inconsistencia de esquema)
       const articles = await prisma.$queryRawUnsafe(
         `SELECT 
-           a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.featured, a.views, a.createdAt, a.updatedAt, a.published,
+           a.id, a.title, a.slug, a.excerpt, a.content, a.image, a.banner, a.featured, a.views, a.createdAt, a.updatedAt, a.published,
            c.id AS categoryId, c.name AS categoryName, c.slug AS categorySlug
          FROM article a
          LEFT JOIN category c ON a.categoryId = c.id
