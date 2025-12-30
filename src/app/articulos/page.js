@@ -257,7 +257,7 @@ const ArticulosPage = () => {
                           <div className="h-56 rounded-xl overflow-hidden">
                             {article.image ? (
                               <img
-                                src={article.image}
+                                src={article.image?.startsWith('http') ? article.image : `${process.env.NEXT_PUBLIC_ASSETS_URL || ''}${article.image}`}
                                 alt={article.title}
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                               />

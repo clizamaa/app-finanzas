@@ -48,6 +48,9 @@ const ArticlePage = () => {
         
         const data = await response.json()
         setArticle(data.article)
+        if (data.article?.bannerUrl) {
+          setBannerUrl(data.article.bannerUrl)
+        }
       } catch (error) {
         console.error('Error fetching article:', error)
         setError(error.message)
@@ -64,6 +67,7 @@ const ArticlePage = () => {
   useEffect(() => {
     const fetchBanner = async () => {
       if (!article?.id) return
+      if (bannerUrl) return
       try {
         const res = await fetch(`/api/banner/${article.id}`, { cache: 'no-store' })
         if (res.ok) {
@@ -73,7 +77,7 @@ const ArticlePage = () => {
       } catch {}
     }
     fetchBanner()
-  }, [article?.id])
+  }, [article?.id, bannerUrl])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)

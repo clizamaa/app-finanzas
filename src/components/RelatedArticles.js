@@ -94,7 +94,7 @@ const RelatedArticles = ({ currentArticleId, category }) => {
               <div className="relative h-48 overflow-hidden">
                 {article.image ? (
                   <img
-                    src={article.image}
+                    src={article.image?.startsWith('http') ? article.image : `${process.env.NEXT_PUBLIC_ASSETS_URL || ''}${article.image}`}
                     alt={article.title}
                     className="w-full h-full object-cover"
                   />
