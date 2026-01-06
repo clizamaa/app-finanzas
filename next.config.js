@@ -1,17 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración de compresión
   compress: true,
-  
-  // Configuración específica para cPanel
   output: 'standalone',
-  
-  // Ignorar errores de ESLint durante el build
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
-  // Configuración de headers de seguridad
   async headers() {
     return [
       {
@@ -50,8 +43,6 @@ const nextConfig = {
       }
     ]
   },
-
-  // Configuración de cache
   async rewrites() {
     return [
       {
@@ -60,36 +51,23 @@ const nextConfig = {
       }
     ]
   },
-
-  // Configuración de imágenes para cPanel
   images: {
-    domains: ['localhost', 'appfinanzashoy.com'],
+    domains: ['localhost', 'appfinanzashoy.com', 'res.cloudinary.com'],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;"
   },
-
-  // Configuración de redirects
-
-
-  // Optimizaciones de producción
   poweredByHeader: false,
   generateEtags: true,
-  
-  // Configuración experimental para mejor rendimiento
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['lucide-react']
   },
-  
-  // Variables de entorno
   env: {
     SITE_URL: process.env.SITE_URL,
     SITE_NAME: process.env.SITE_NAME
   },
-  
-  // Configuración de webpack para cPanel
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals.push('_http_common')
